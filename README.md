@@ -11,6 +11,7 @@ PDBbind v2019:
 wget -c https://pdbbind.oss-cn-hangzhou.aliyuncs.com/download/PDBbind_v2020_refined.tar.gz
 ```
 
+
 CASF 2016:
 ```sh
 wget -c https://pdbbind.oss-cn-hangzhou.aliyuncs.com/download/CASF-2016.tar.gz
@@ -23,4 +24,40 @@ tar -zxvf PDBbind_v2020_refined.tar.gz -C data
 tar -zxvf CASF-2016.tar.gz -C data
 rm PDBbind_v2020_refined.tar.gz
 rm CASF-2016.tar.gz
+```
+
+## Create the direct-complex dataset
+First, run the code to create the folders of direct complex structures in CASF-2016 core set.
+```sh
+cd data_processing
+python create_complex_folders.py
+```
+Then, run AlphaFold 3 or CHAI-1 and generate the complex structures, which should be run in their own servers or separate local environments. 
+
+## File structure
+```sh
+data
+├── CASF-2016
+│   ├── coreset
+│   │      ├── 1a30
+│   │      │   ├── 1a30_ligand_opt.mol2
+│   │      │   ├── 1a30_ligand.mol2
+│   │      │   ├── 1a30_ligand.sdf
+│   │      │   ├── 1a30_pocket.pdb
+│   │      │   ├── 1a30_protein.mol2
+│   │      │   └── 1a30_protein.pdb
+│   │      └── ...
+│   ├── ...
+│   └── power_scoring
+├── complexes_16
+│   ├── 1a30
+│   │   └── ...
+│   └── ...
+└── refined-set
+    ├── 1a1e
+    │   ├── 1a1e_ligand.mol2
+    │   ├── 1a1e_ligand.sdf
+    │   ├── 1a1e_pocket.pdb
+    │   └── 1a1e_protein.pdb
+    └── ...
 ```
