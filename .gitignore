@@ -1,3 +1,17 @@
+# datasets too large
+*.tar.gz
+*.zip
+*.tar
+
+data/CASF-2016
+data/refined-set
+
+
+
+
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
