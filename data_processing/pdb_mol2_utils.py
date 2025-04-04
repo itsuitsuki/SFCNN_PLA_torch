@@ -4,7 +4,10 @@ def extract_protein_sequence_from_pdb(pdb_file):
         'ALA': 'A', 'CYS': 'C', 'ASP': 'D', 'GLU': 'E', 'PHE': 'F',
         'GLY': 'G', 'HIS': 'H', 'ILE': 'I', 'LYS': 'K', 'LEU': 'L',
         'MET': 'M', 'ASN': 'N', 'PRO': 'P', 'GLN': 'Q', 'ARG': 'R',
-        'SER': 'S', 'THR': 'T', 'VAL': 'V', 'TRP': 'W', 'TYR': 'Y'
+        'SER': 'S', 'THR': 'T', 'VAL': 'V', 'TRP': 'W', 'TYR': 'Y',
+        # Optional non-standard amino acids:
+        'SEC': 'U',  # Selenocysteine
+        'PYL': 'O'   # Pyrrolysine
     }
     chain_sequences = {}
     with open(pdb_file, 'r') as f:
