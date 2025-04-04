@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 # Converts the protein-ligand complexes into 4D tensor. 
-class Feature_extractor():
+class FeatureExtractor():
     def __init__(self):
         self.atom_codes = {}
         # 'others' includs metal atoms and B atom. There are no B atoms on training and test sets. 
@@ -46,8 +46,8 @@ class Feature_extractor():
             else:
                 features.append(self.encode(atom.atomicnum,molprotein))
         
-        coords = np.array(coords, dtype=np.float32)
-        features = np.array(features, dtype=np.float32)
+        coords = np.array(coords, dtype=np.float32) # shape [num_atoms, 3]
+        features = np.array(features, dtype=np.float32) # shape [num_atoms, 28]
         
         return coords, features
      
@@ -64,13 +64,22 @@ class Feature_extractor():
     # Each complex in train set is rotated 9 times for data amplification.
     # The complexes in core set are not rotated. 
     # The default resolution is 20*20*20.
-    def grid(self,coords, features, resolution=1.0, max_dist=10.0, rotations=9):
+    def grid(self,coords, features, resolution=1.0, max_dist=10.0, n_amplification=9):
+        """
+        Generate a grid representation of the protein-ligand complex.
+
+        n_amplification: int = number of rotations to apply to the complex.
+        if n_amplification=0, the complex is not rotated, only the original complex is used.
+        (return shape [1, 20, 20, 20, features.shape[1]])
+        otherwise, the complex is rotated n_amplification times,
+        and return shape [n_amplification + 1, 20, 20, 20, features.shape[1]].
+        """
         assert coords.shape[1] == 3
         assert coords.shape[0] == features.shape[0]  
 
         
-        grid=np.zeros((rotations+1,20,20,20,features.shape[1]),dtype=np.float32)
-        x=y=z=np.array(range(-10,10),dtype=np.float32)+0.5
+        grid=np.zeros((n_amplification + 1, 20, 20, 20, features.shape[1]),dtype=np.float32)
+        x=y=z=np.array(range(-10, 10),dtype=np.float32)+0.5
         for i in range(len(coords)):
             coord=coords[i]
             tmpx=abs(coord[0]-x)
@@ -78,8 +87,11 @@ class Feature_extractor():
             tmpz=abs(coord[2]-z)
             if np.max(tmpx)<=19.5 and np.max(tmpy)<=19.5 and np.max(tmpz) <=19.5:
                 grid[0,np.argmin(tmpx),np.argmin(tmpy),np.argmin(tmpz)] += features[i]
+                
+                
+        # for testing, the complex is not rotated. n_rotations=1
         
-        for j in range(rotations):
+        for j in range(n_amplification):
             theta = random.uniform(np.pi/18,np.pi/2)
             roller = random.randrange(3)
             coords = np.dot(coords, self.rotation_matrix(theta,roller))
@@ -88,30 +100,15 @@ class Feature_extractor():
                 tmpx=abs(coord[0]-x)
                 tmpy=abs(coord[1]-y)
                 tmpz=abs(coord[2]-z)
+                
+                # because the grid is 20x20x20, and tmp(x,y,z) out of 19.5 means that the atom is out of the grid, then eliminate it
                 if np.max(tmpx)<=19.5 and np.max(tmpy)<=19.5 and np.max(tmpz) <=19.5:
                     grid[j+1,np.argmin(tmpx),np.argmin(tmpy),np.argmin(tmpz)] += features[i]
                 
         return grid
 
-    def test_grid(self,coords, features):
-        assert coords.shape[1] == 3
-        assert coords.shape[0] == features.shape[0]  
-        
-        grid=np.zeros((1,20,20,20,features.shape[1]),dtype=np.float32)
-        x=y=z=np.array(range(-10,10),dtype=np.float32)+0.5
-        for i in range(len(coords)):
-            coord=coords[i]
-            tmpx=abs(coord[0]-x)
-            tmpy=abs(coord[1]-y)
-            tmpz=abs(coord[2]-z)
-            if np.max(tmpx)<=19.5 and np.max(tmpy)<=19.5 and np.max(tmpz) <=19.5: # why? because the grid is 20x20x20, and tmp(x,y,z) out of 19.5 means that the atom is out of the grid, then eliminate it
-                grid[0,np.argmin(tmpx),np.argmin(tmpy),np.argmin(tmpz)] += features[i]
-        
-        return grid
-
-
 def test_get_grid(protein, ligand):
-    Feature = Feature_extractor()
+    Feature = FeatureExtractor()
     coords1, features1 = Feature.get_features(protein,1)
     coords2, features2 = Feature.get_features(ligand,0)
     

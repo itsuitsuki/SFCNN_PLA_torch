@@ -4,18 +4,20 @@ The implementation for Assessing the Reliability of AlphaFold3 Predictions for P
 
 # Preparation of Environment
 ## Create and activate a conda environment
+Note that the environment is created with Python 3.7.5.
+
 ```sh
-conda create -n sfcnn python=3.12
+conda create -n sfcnn python=3.7.5
 conda activate sfcnn
 ```
 
 ## Install dependencies
-OpenBabel:
+OpenBabel 2.4.1:
 ```sh
 conda install -c conda-forge openbabel
 ```
 
-PyTorch (CUDA 12.4 version as the default in Apr 4 2025):
+PyTorch 1.3.1 (CUDA 12.4 version as the default in Apr 4 2025):
 ```sh
 pip3 install torch torchvision torchaudio
 ```
@@ -55,7 +57,20 @@ First, run the code to create the folders of direct complex structures in CASF-2
 cd data_processing
 python create_complex_folders.py
 ```
-Then, run AlphaFold 3 or CHAI-1 and generate the complex structures, which should be run in their own servers or separate local environments. 
+Then, run AlphaFold 3 or CHAI-1 and generate the complex structures, which should be run in their own servers or separate local environments. You should place the generated complex structures in 
+subfolders of `data/complexes_16`.
+
+You should stay in the `data_processing` folder and run the following command:
+
+
+## Create the protein-ligand complex dataset files (Arrow format)
+Based on the last step, you are still in the `data_processing` folder. You can run the following command to create the ordinary dataset files (training & validation & testing) in Arrow format.
+```sh
+python create_ordinary_dataset.py
+cd ..
+```
+
+Canonical dataset arrow files will be save in `data/ordinary_dataset` folder.
 
 ## File structure
 ```sh

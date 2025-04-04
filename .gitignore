@@ -9,6 +9,9 @@ data/refined-set
 # Only Apple Can Do
 .DS_Store
 
+# ordinary dataset
+data/ordinary_dataset
+
 
 
 
