@@ -139,7 +139,7 @@ class SFCNN(nn.Module):
         x = self.bn1(x) # (b, 256) -> (b, 256)
         x = F.relu(x) # (b, 256) -> (b, 256)
         x = self.fc2(x) # (b, 256) -> (b, 1)
-        return x
+        return x # TODO: normalized prediction. should multiply by 15 in final data processing step.
     
 # unit test
 if __name__ == "__main__" and False:

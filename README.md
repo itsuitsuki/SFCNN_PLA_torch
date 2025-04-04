@@ -2,6 +2,29 @@
 
 The implementation for Assessing the Reliability of AlphaFold3 Predictions for Protein-Ligand Affinity Prediction via [SFCNN](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-022-04762-3). Also the repository for CS177 SP25 Course Project, ShanghaiTech. The original code for SFCNN is published [here](https://github.com/bioinfocqupt/Sfcnn) written in TensorFlow, while we adapt this into a version written by PyTorch.
 
+# Preparation of Environment
+## Create and activate a conda environment
+```sh
+conda create -n sfcnn python=3.12
+conda activate sfcnn
+```
+
+## Install dependencies
+OpenBabel:
+```sh
+conda install -c conda-forge openbabel
+```
+
+PyTorch (CUDA 12.4 version as the default in Apr 4 2025):
+```sh
+pip3 install torch torchvision torchaudio
+```
+
+Others: Please refer to `requirements.txt` for the full list of dependencies.
+```sh
+pip install -r requirements.txt
+```
+
 # Preparation of Data
 ## Download the dataset
 The training set used in this project is PDBbind v2019 refined set. The test set is CASF-2016 scoring power benchmark.
