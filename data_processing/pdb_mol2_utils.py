@@ -24,17 +24,16 @@ def extract_protein_sequence_from_pdb(pdb_file):
     return chain_sequences
 
 def extract_smiles_from_mol2(mol2_file):
-    with open(mol2_file, 'r') as f:
-        for line in f:
-            if line.startswith("SMILES:"):
-                # Return the substring after the colon, stripping whitespace from both ends
-                return line.partition(":")[2].strip()
+    from rdkit import Chem
+    mol = Chem.MolFromMol2File(mol2_file)
+    if mol is not None:
+        return Chem.MolToSmiles(mol)
     return None
 
 
 if __name__ == '__main__':
     pdb_path = "data/CASF-2016/coreset/1a30/1a30_protein.pdb"
-    mol2_path = "data/CASF-2016/coreset/1a30/1a30_ligand.mol2"
+    mol2_path = "data/CASF-2016/coreset/1a30/1a30_ligand_opt.mol2"
     protein_sequences = extract_protein_sequence_from_pdb(pdb_path)
     smiles = extract_smiles_from_mol2(mol2_path)
     print("Protein sequences:", protein_sequences)
