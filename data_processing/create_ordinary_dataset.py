@@ -4,7 +4,8 @@ import shutil
 from datasets import Dataset as HFDataset
 from feature_utils import FeatureExtractor
 import random
-import pybel
+import openbabel as ob
+from openbabel import pybel
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -12,6 +13,13 @@ from tqdm import tqdm
 # DATA AUGMENT -> 10 ROTATION FOR EACH TRAINING DATA COMPLEX
 N_ROTATE = 10
 N_SAMPLES_TRAIN = 4100 # 4100 * 10 = 41000 samples for training, others*10 for validation
+SEED = 42
+# Set random seed for reproducibility
+random.seed(SEED)
+# Set the random seed for numpy
+np.random.seed(SEED)
+# Set the random seed for PyTorch
+torch.manual_seed(SEED)
 
 train_data_dir = "../data/refined-set"
 train_complex_names = glob.glob(os.path.join(train_data_dir, "*"))
@@ -38,6 +46,7 @@ train_complex_names = list(train_complex_names)
 print("len(test_complex_names):", len(test_complex_names))
 
 # shuffle the train set and split into train/valid: 41000 for train, others for valid
+train_complex_names.sort()
 random.shuffle(train_complex_names)
 valid_complex_names = train_complex_names[N_SAMPLES_TRAIN:]
 train_complex_names = train_complex_names[:N_SAMPLES_TRAIN]
@@ -65,45 +74,22 @@ with open(affinity_file, "r") as f:
                 valid_affinity[line.split()[0] + "_" + str(i)] = float(line.split()[3])
         elif line[0] != '#' and line.split()[0] in test_complex_names:
             test_affinity[line.split()[0]] = float(line.split()[3])
-            
-# stuff test set protein-ligand complexes into grids & save them
-test_grids = []
-test_labels = []
-for complex_name in tqdm(test_complex_names, desc="Processing test complexes"):
-    # read mol2 and pdb file
-    mol2_file = os.path.join(test_data_dir, complex_name, complex_name + "_ligand.mol2")
-    pdb_file = os.path.join(test_data_dir, complex_name, complex_name + "_protein.pdb")
-    ligand = pybel.readfile("mol2", mol2_file).__next__() # the very first one ligand molecule
-    # print(ligand)
-    protein = pybel.readfile("pdb", pdb_file).__next__() # the very first one protein molecule
-    coords1, features1 = extractor.get_features(protein, 1) # protein, shape 
-    coords2, features2 = extractor.get_features(ligand, 0) # ligand
-    center = (np.max(coords2, axis=0) + np.min(coords2, axis=0)) / 2
-    coords_cat = np.concatenate((coords1, coords2), axis=0)
-    features_cat = np.concatenate((features1, features2), axis=0)
-    assert coords_cat.shape[0] == features_cat.shape[0], "coords and features should have the same number of atoms"
-    coords_cat = coords_cat - center
-    grid = extractor.grid(coords_cat, features_cat, n_amplification=0) # shape (1, 20, 20, 20, 28)
-    # save in the dict, torch
-    grid = torch.tensor(grid, dtype=torch.float32)
-
-    test_grids.append(grid)
-    test_labels.append(test_affinity[complex_name])
-
-# values of the test_affinity dict -> lists
-test_dataset = HFDataset.from_dict({"grid": test_grids, "label": test_labels})
-# save the test_affinity dict -> arrow
-test_dataset.save_to_disk("../data/ordinary_dataset/test")
 
 train_grids = []
 train_labels = []
 for complex_name in tqdm(train_complex_names, desc="Processing train complexes"):
+    # continue the segfault things
+    if complex_name in ["3vdb"]:
+        continue
+    
     # read mol2 and pdb file
     mol2_file = os.path.join(train_data_dir, complex_name, complex_name + "_ligand.mol2")
     pdb_file = os.path.join(train_data_dir, complex_name, complex_name + "_protein.pdb")
+    # print(mol2_file, pdb_file)
     ligand = pybel.readfile("mol2", mol2_file).__next__() # the very first one ligand molecule
     # print(ligand)
     protein = pybel.readfile("pdb", pdb_file).__next__() # the very first one protein molecule
+    # print(protein)
     coords1, features1 = extractor.get_features(protein, 1) # protein, shape 
     coords2, features2 = extractor.get_features(ligand, 0) # ligand
     center = (np.max(coords2, axis=0) + np.min(coords2, axis=0)) / 2
@@ -143,3 +129,31 @@ valid_dataset = HFDataset.from_dict({"grid": valid_grids, "label": valid_labels}
 # save the valid_affinity dict -> arrow
 valid_dataset.save_to_disk("../data/ordinary_dataset/valid")
 print("train_dataset:", train_dataset)
+# stuff test set protein-ligand complexes into grids & save them
+test_grids = []
+test_labels = []
+for complex_name in tqdm(test_complex_names, desc="Processing test complexes"):
+    # read mol2 and pdb file
+    mol2_file = os.path.join(test_data_dir, complex_name, complex_name + "_ligand.mol2")
+    pdb_file = os.path.join(test_data_dir, complex_name, complex_name + "_protein.pdb")
+    ligand = pybel.readfile("mol2", mol2_file).__next__() # the very first one ligand molecule
+    # print(ligand)
+    protein = pybel.readfile("pdb", pdb_file).__next__() # the very first one protein molecule
+    coords1, features1 = extractor.get_features(protein, 1) # protein, shape 
+    coords2, features2 = extractor.get_features(ligand, 0) # ligand
+    center = (np.max(coords2, axis=0) + np.min(coords2, axis=0)) / 2
+    coords_cat = np.concatenate((coords1, coords2), axis=0)
+    features_cat = np.concatenate((features1, features2), axis=0)
+    assert coords_cat.shape[0] == features_cat.shape[0], "coords and features should have the same number of atoms"
+    coords_cat = coords_cat - center
+    grid = extractor.grid(coords_cat, features_cat, n_amplification=0) # shape (1, 20, 20, 20, 28)
+    # save in the dict, torch
+    grid = torch.tensor(grid, dtype=torch.float32)
+
+    test_grids.append(grid)
+    test_labels.append(test_affinity[complex_name])
+
+# values of the test_affinity dict -> lists
+test_dataset = HFDataset.from_dict({"grid": test_grids, "label": test_labels})
+# save the test_affinity dict -> arrow
+test_dataset.save_to_disk("../data/ordinary_dataset/test")

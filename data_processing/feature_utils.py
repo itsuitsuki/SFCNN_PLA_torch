@@ -12,6 +12,8 @@ class FeatureExtractor():
         
         # 1 is H, 6 is C, 7 is N, 8 is O, 9 is F, 15 is P, 16 is S, 17 is Cl, 19-32 are Arsenic to Selenium, 37-51 are Rubidium to Indium, 55-84 are Cesium to Polonium
         atom_types = [1,(6,1),(6,2),(6,3),(7,1),(7,2),(7,3),8,15,(16,2),(16,3),34,[9,17,35,53],others] 
+        # (6,1): C atom with sp hybridization, (6,2) C sp2, (6,3) C sp3
+        # (16,2): S sp2, (16,3) S sp3 sp3d
       
         for i, j in enumerate(atom_types):
             if type(j) is list:
@@ -32,7 +34,46 @@ class FeatureExtractor():
             encoding[self.sum_atom_types+self.atom_codes[atomic_num]] = 1.0
         
         return encoding
-    
+
+# TODO FOR RDKIT BUT NOT USED NOW
+#    @staticmethod
+#     def _convert_hybridization(atom):
+#         hyb = atom.GetHybridization()
+#         if hyb == Chem.rdchem.HybridizationType.SP:
+#             return 1
+#         elif hyb == Chem.rdchem.HybridizationType.SP2:
+#             return 2
+#         elif hyb in [Chem.rdchem.HybridizationType.SP3, Chem.rdchem.HybridizationType.SP3D]:
+#             return 3
+#         else:
+#             # for other hybridization types, return 0
+#             print("Hybrid:", hyb)
+#             exit()
+#             return 0
+
+#     # Get atom coords and atom features from the complexes.   
+#     def get_features(self, molecule: Chem.Mol, molprotein):
+#         coords = []
+#         features = []
+#         conf = molecule.GetConformer()
+#         for atom in molecule.GetAtoms():
+#             # coords.append(atom.coords)
+#             x, y, z = conf.GetAtomPosition(atom.GetIdx())
+#             coords.append([x, y, z])
+#             atomic_num = atom.GetAtomicNum()
+#             if atomic_num in [6, 7, 16]: # C, N, S
+#                 # if the atom is C, N or S, then get the hybridization type
+#                 # atomicnum = (atom.atomicnum,atom.hyb)
+#                 atomic_num = (atomic_num, self._convert_hybridization(atom))
+#                 features.append(self.encode(atomic_num, molprotein))
+#             else:
+#                 features.append(self.encode(atomic_num, molprotein))
+        
+#         coords = np.array(coords, dtype=np.float32) # shape [num_atoms, 3]
+#         features = np.array(features, dtype=np.float32) # shape [num_atoms, 28]
+        
+#         return coords, features
+     
     # Get atom coords and atom features from the complexes.   
     def get_features(self, molecule, molprotein):
         coords = []

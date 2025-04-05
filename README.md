@@ -4,10 +4,10 @@ The implementation for Assessing the Reliability of AlphaFold3 Predictions for P
 
 # Preparation of Environment
 ## Create and activate a conda environment
-Note that the environment is created with Python 3.7.5.
+Note that the environment is created with Python 3.7.12.
 
 ```sh
-conda create -n sfcnn python=3.7.5
+conda create -n sfcnn python=3.7.12
 conda activate sfcnn
 ```
 
@@ -17,14 +17,14 @@ OpenBabel 2.4.1:
 conda install -c conda-forge openbabel
 ```
 
-PyTorch 1.3.1 (CUDA 12.4 version as the default in Apr 4 2025):
+PyTorch 1.13.1 (CUDA 12.4 version as the default in Apr 4 2025):
 ```sh
-pip3 install torch torchvision torchaudio
+pip3 install torch
 ```
 
 Others: Please refer to `requirements.txt` for the full list of dependencies.
 ```sh
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 # Preparation of Data
