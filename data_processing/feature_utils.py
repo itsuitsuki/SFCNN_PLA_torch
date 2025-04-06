@@ -118,14 +118,13 @@ class FeatureExtractor():
         assert coords.shape[1] == 3
         assert coords.shape[0] == features.shape[0]  
 
-        
         grid=np.zeros((n_amplification + 1, 20, 20, 20, features.shape[1]),dtype=np.float32)
         x=y=z=np.array(range(-10, 10),dtype=np.float32)+0.5
         for i in range(len(coords)):
             coord=coords[i]
             tmpx=abs(coord[0]-x)
             tmpy=abs(coord[1]-y)
-            tmpz=abs(coord[2]-z)
+            tmpz=abs(coord[2]-z) 
             if np.max(tmpx)<=19.5 and np.max(tmpy)<=19.5 and np.max(tmpz) <=19.5:
                 grid[0,np.argmin(tmpx),np.argmin(tmpy),np.argmin(tmpz)] += features[i]
                 

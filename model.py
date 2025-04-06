@@ -109,7 +109,7 @@ class SFCNN(nn.Module):
     Args:
         nn (_type_): _description_
     """
-    def __init__(self, in_channels=28):
+    def __init__(self, in_channels=28, dropout=0.5):
         super(SFCNN, self).__init__()
         
         # the convolutional blocks
@@ -129,6 +129,7 @@ class SFCNN(nn.Module):
         # the fully connected layers
         self.fc1 = nn.Linear(224 * 2 * 2 * 2, 256) # dense 256
         self.bn1 = nn.BatchNorm1d(256)
+        self.drop = nn.Dropout(dropout)
         self.fc2 = nn.Linear(256, 1)
         
     def forward(self, x):
@@ -138,9 +139,19 @@ class SFCNN(nn.Module):
         x = self.fc1(x) # (b, 224 * 2 * 2 * 2) -> (b, 256)
         x = self.bn1(x) # (b, 256) -> (b, 256)
         x = F.relu(x) # (b, 256) -> (b, 256)
+        x = self.drop(x)
         x = self.fc2(x) # (b, 256) -> (b, 1)
         return x # TODO: normalized prediction. should multiply by 15 in final data processing step.
-    
+
+def build_model(in_channels=28, dropout=0.5):
+    """
+    Build the model using the SFCNN class
+    """
+    return SFCNN(
+        in_channels=in_channels,
+        dropout=dropout
+    )
+
 # unit test
 if __name__ == "__main__" and False:
     # test the model

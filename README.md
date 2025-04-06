@@ -12,9 +12,10 @@ conda activate sfcnn
 ```
 
 ## Install dependencies
-OpenBabel 2.4.1:
+OpenBabel (2.4.1 will cause SegmentFault, but 3.1.1 will still cause some warnings when Kekulizing):
 ```sh
-conda install -c conda-forge openbabel
+conda install -c conda-forge openbabel # 3.1.1
+conda install -c openbabel openbabel # 2.4.1
 ```
 
 PyTorch 1.13.1 (CUDA 12.4 version as the default in Apr 4 2025):
