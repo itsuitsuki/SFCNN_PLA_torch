@@ -9,7 +9,8 @@ from openbabel import pybel
 import numpy as np
 import torch
 from tqdm import tqdm
-
+import warnings
+# warnings.filterwarnings("ignore")
 # DATA AUGMENT -> 10 ROTATION FOR EACH TRAINING DATA COMPLEX
 N_ROTATE = 10
 N_SAMPLES_TRAIN = 4100 # 4100 * 10 = 41000 samples for training, others*10 for validation
@@ -78,10 +79,6 @@ with open(affinity_file, "r") as f:
 train_grids = []
 train_labels = []
 for complex_name in tqdm(train_complex_names, desc="Processing train complexes"):
-    # continue the segfault things
-    if complex_name in ["3vdb"]:
-        continue
-    
     # read mol2 and pdb file
     mol2_file = os.path.join(train_data_dir, complex_name, complex_name + "_ligand.mol2")
     pdb_file = os.path.join(train_data_dir, complex_name, complex_name + "_protein.pdb")
@@ -124,11 +121,12 @@ for complex_name in tqdm(valid_complex_names, desc="Processing valid complexes")
     grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20)
     
     valid_labels += [valid_affinity[complex_name + "_" + str(i)] for i in range(N_ROTATE)]
-    valid_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (1, 20, 20, 20, 28)
+    valid_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (20, 20, 20, 28)
 valid_dataset = HFDataset.from_dict({"grid": valid_grids, "label": valid_labels})
 # save the valid_affinity dict -> arrow
 valid_dataset.save_to_disk("../data/ordinary_dataset/valid")
-print("train_dataset:", train_dataset)
+
+
 # stuff test set protein-ligand complexes into grids & save them
 test_grids = []
 test_labels = []
@@ -148,9 +146,9 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes"):
     coords_cat = coords_cat - center
     grid = extractor.grid(coords_cat, features_cat, n_amplification=0) # shape (1, 20, 20, 20, 28)
     # save in the dict, torch
-    grid = torch.tensor(grid, dtype=torch.float32)
+    # grid = torch.tensor(grid, dtype=torch.float32)
 
-    test_grids.append(grid)
+    test_grids.append(grid.squeeze(0)) # each grid is a tensor shape (20, 20, 20, 28)
     test_labels.append(test_affinity[complex_name])
 
 # values of the test_affinity dict -> lists

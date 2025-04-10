@@ -20,7 +20,8 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     model.load_state_dict(torch.load(model_path))
     model.eval()
     def collate_fn(batch):
-        grids = torch.stack([torch.tensor(item["grid"], dtype=torch.float32) for item in batch]) # (64, 20, 20, 20, 28)
+        grids = torch.stack([torch.tensor(item["grid"], dtype=torch.float32) for item in batch], dim=0)
+        # print(grids.shape)
         # -> (64, 28, 20, 20, 20)
         grids = grids.permute(0, 4, 1, 2, 3)
         return {
