@@ -4,7 +4,8 @@ from datasets import Dataset as HFDataset
 import torch
 from tqdm import tqdm
 import argparse
-torch.set_printoptions(edgeitems=114514)
+import numpy as np
+# torch.set_printoptions(edgeitems=114514)
 def train(data_path = "./data/ordinary_dataset",
           lr = 0.001,
           dropout = 0.5,
@@ -65,7 +66,8 @@ def train(data_path = "./data/ordinary_dataset",
         collate_fn=collate_fn,
     )
     
-    best_valid_loss = float("inf")
+    # best_valid_loss = float("inf")
+    best_pearson = float("-inf")
     best_model = None
     # training loop
     for epoch in range(n_epochs):
@@ -87,19 +89,33 @@ def train(data_path = "./data/ordinary_dataset",
         # Validation
         model.eval()
         valid_losses = []
+        valid_pred = []
+        valid_labels = []
         with torch.no_grad():
             for batch in tqdm(valid_loader, desc="Validating"):
                 grids = batch["grid"].to(device)
                 labels = batch["label"].to(device)
                 outputs = model(grids)
+                valid_pred.append(outputs.cpu().numpy())
+                valid_labels.append(labels.cpu().numpy())
                 loss = loss_fn(outputs, labels)
                 valid_losses.append(loss.item())
         avg_valid_loss = sum(valid_losses) / len(valid_losses)
         print(f"Validation Loss: {avg_valid_loss:.4f}")
+        # pearson
+        valid_pred = np.concatenate(valid_pred)
+        valid_labels = np.concatenate(valid_labels)
+        # Calculate Pearson correlation coefficient
+        pearson_corr = np.corrcoef(valid_pred.flatten(), valid_labels.flatten())[0, 1]
         model.train()
         # Save the best model
-        if avg_valid_loss < best_valid_loss:
-            best_valid_loss = avg_valid_loss
+        
+        # DONE: CHANGED TO PEARSON COMPARISON
+        # if avg_valid_loss < best_valid_loss:
+        #     best_valid_loss = avg_valid_loss
+        print("Pearson Correlation Coefficient:", pearson_corr)
+        if pearson_corr > best_pearson:
+            best_pearson = pearson_corr
             best_model = model.state_dict()
             print("Best model updated.")
     # Save the best model

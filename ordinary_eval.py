@@ -57,6 +57,7 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     # Calculate Pearson correlation coefficient
     pearson_corr = np.corrcoef(all_predictions.flatten(), all_labels.flatten())[0, 1]
     print(f"Pearson Correlation Coefficient: {pearson_corr}")
+    return pearson_corr
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate the model")
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="./ckpt/best_model.pth", help="Path to the model")
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size for evaluation")
     args = parser.parse_args()
-    ordinary_eval(
+    pearson_corr = ordinary_eval(
         data_path=args.data_path,
         model_path=args.model_path,
         batch_size=args.batch_size,
