@@ -2,7 +2,7 @@
 *.tar.gz
 *.zip
 *.tar
-
+wandb/
 data/CASF-2016
 data/refined-set
 

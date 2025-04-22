@@ -5,6 +5,8 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import argparse
+from scipy.stats import spearmanr         # add spearman
+from lifelines.utils import concordance_index  # add c-index
 
 def ordinary_eval(data_path = "./data/ordinary_dataset",
                   model_path = "./ckpt/best_model.pth",
@@ -15,6 +17,8 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     # Load the model
     model = build_model()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("=" * 50)
+    print("Starting evaluation...")
     print(f"Using device: {device}")
     model = model.to(device)
     model.load_state_dict(torch.load(model_path))
@@ -37,7 +41,8 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     with torch.no_grad():
         for batch in tqdm(test_loader, desc="Evaluating"):
             grids = batch["grid"].to(device)
-            labels = batch["label"].to(device)
+            # NOTE: NORMALIZE
+            labels = batch["label"].to(device) / 15.
             outputs = model(grids)
             all_predictions.append(outputs.cpu().numpy())
             all_labels.append(labels.cpu().numpy())
@@ -57,6 +62,12 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     # Calculate Pearson correlation coefficient
     pearson_corr = np.corrcoef(all_predictions.flatten(), all_labels.flatten())[0, 1]
     print(f"Pearson Correlation Coefficient: {pearson_corr}")
+    spearman_corr, _ = spearmanr(all_predictions.flatten(), all_labels.flatten())
+    print(f"Spearman Correlation Coefficient: {spearman_corr}")
+    # Calculate C-index
+    c_index = concordance_index(all_labels.flatten(), all_predictions.flatten())
+    print(f"C-index: {c_index}")
+    print("Evaluation completed.")
     return pearson_corr
     
 if __name__ == "__main__":
