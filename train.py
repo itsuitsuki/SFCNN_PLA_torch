@@ -89,7 +89,7 @@ def train(data_path = "./data/ordinary_dataset",
             # NOTE: NORMALIZE
             labels = batch["label"].to(device) / 15.
             optimizer.zero_grad()
-            outputs = model(grids)
+            outputs = model(grids) # shape (64, 1)
             loss_mse = loss_fn(outputs, labels)
             # loss pearson
             # pearson penalty
@@ -100,7 +100,9 @@ def train(data_path = "./data/ordinary_dataset",
             pbar.update(1)
             pbar.set_postfix(loss=loss.item())
             wandb.log({
-                "loss": loss.item(),
+                "train_loss": loss.item(),
+                "train_mse_loss": loss_mse.item(),
+                "train_pearson_penalty": pearson_penalty.item(),
                 "epoch": epoch,
                 "global_step": global_step,
             }, step=global_step)
