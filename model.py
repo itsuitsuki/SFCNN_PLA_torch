@@ -147,10 +147,27 @@ def build_model(in_channels=28, dropout=0.5):
     """
     Build the model using the SFCNN class
     """
-    return SFCNN(
+    model = SFCNN(
         in_channels=in_channels,
         dropout=dropout
     )
+    # init the weight
+    for m in model.modules():
+        if isinstance(m, nn.Conv3d):
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.Linear):
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.BatchNorm1d):
+            nn.init.ones_(m.weight)
+            nn.init.zeros_(m.bias)
+        elif isinstance(m, nn.BatchNorm3d):
+            nn.init.ones_(m.weight)
+            nn.init.zeros_(m.bias)
+    return model
 
 # unit test
 if __name__ == "__main__" and False:
