@@ -57,11 +57,11 @@ First, run the code to create the folders of direct complex structures in CASF-2
 ```sh
 cd data_processing
 python create_complex_folders.py
+cd ..
 ```
 For one complex, you can generate the SMILES for its ligand and the protein sequences by running the following command:
 ```sh
-cd data_processing
-python pdb_mol2_utils.py
+python data_processing/pdb_mol2_utils.py --name 1a30 # for example
 ```
 where the `pdb_path` and `mol2_path` (ligand) should be manually specified in the code.
 
@@ -74,6 +74,7 @@ You should stay in the `data_processing` folder and run the following command:
 ## Create the protein-ligand complex dataset files (Arrow format)
 Based on the last step, you are still in the `data_processing` folder. You can run the following command to create the ordinary dataset files (training & validation & testing) in Arrow format.
 ```sh
+cd data_processing
 python create_ordinary_dataset.py
 cd ..
 ```

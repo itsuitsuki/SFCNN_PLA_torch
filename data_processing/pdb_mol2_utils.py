@@ -32,8 +32,13 @@ def extract_smiles_from_mol2(mol2_file):
 
 
 if __name__ == '__main__':
-    pdb_path = "data/CASF-2016/coreset/1a30/1a30_protein.pdb"
-    mol2_path = "data/CASF-2016/coreset/1a30/1a30_ligand_opt.mol2"
+    import argparse
+    parser = argparse.ArgumentParser(description="Extract protein sequences and SMILES from PDB and MOL2 files.")
+    parser.add_argument("--name", type=str, default="1a30", help="Name of the complex")
+    args = parser.parse_args()
+    name = args.name
+    pdb_path = f"data/CASF-2016/coreset/{name}/{name}_protein.pdb"
+    mol2_path = f"data/CASF-2016/coreset/{name}/{name}_ligand_opt.mol2"
     protein_sequences = extract_protein_sequence_from_pdb(pdb_path)
     smiles = extract_smiles_from_mol2(mol2_path)
     print("Protein sequences:", protein_sequences)
