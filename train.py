@@ -9,6 +9,32 @@ import wandb
 from scipy.stats import spearmanr
 from lifelines.utils import concordance_index
 # torch.set_printoptions(edgeitems=114514)
+DEBUG = False
+def _shape_hook(name):
+    def hook(mod, inp, out):
+        print(f"{name}: in {tuple(inp[0].shape)} → out {tuple(out.shape)}")
+    return hook
+
+# def pearson_corr(pred, target, eps=1e-8):
+#     """
+#     pred, target :  (B, 1)  or  (B,)   tensors on *any* device
+#     returns      :  scalar correlation            (same device, grad‑friendly)
+#     """
+#     pred   = pred.view(-1)
+#     target = target.view(-1)
+
+#     pred_z   = pred   - pred.mean()
+#     target_z = target - target.mean()
+
+#     cov   = (pred_z * target_z).mean()
+#     var_p = (pred_z ** 2).mean()
+#     var_t = (target_z ** 2).mean()
+
+#     corr = cov / (var_p.sqrt() * var_t.sqrt() + eps)
+#     return corr          # differentiable, never NaN thanks to eps
+
+
+
 def train(data_path = "./data/ordinary_dataset",
           lr = 5e-4,
           dropout = 0.1,
@@ -43,10 +69,15 @@ def train(data_path = "./data/ordinary_dataset",
         ],
         lr=lr
     )
+    if DEBUG:
+        for n, m in model.named_modules():
+            if isinstance(m, torch.nn.Conv3d):
+                m.register_forward_hook(_shape_hook(n))
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs for DataParallel")
         model = torch.nn.DataParallel(model)
     model.train()
+
     # loss function: mse (regress)
     loss_fn = torch.nn.MSELoss()
     def collate_fn(batch):
@@ -90,27 +121,35 @@ def train(data_path = "./data/ordinary_dataset",
         pbar = tqdm(total=len(train_loader), desc="Training")
         for batch in train_loader:
             grids = batch["grid"].to(device)
+            print(f"batch size this step = {grids.size(0)}")
             # print("Sum of grids:", grids.sum())
             # NOTE: NORMALIZE
             labels = batch["label"].to(device) / 15.
             optimizer.zero_grad()
+            
             outputs = model(grids) # shape (64, 1)
             loss_mse = loss_fn(outputs, labels)
             # loss pearson
             # pearson penalty
-            pearson_penalty = torch.corrcoef(torch.stack([outputs.squeeze(), labels.squeeze()]))[0, 1]
-            loss = loss_mse - pearson_coeff * pearson_penalty
+            # breakpoint()
+            # pearson_penalty = torch.corrcoef(torch.stack([outputs.squeeze(1), labels.squeeze(1)]))[0, 1]
+            # pearson_penalty = pearson_corr(outputs, labels)
+            # breakpoint()
+            # pearson_penalty = torch.nan_to_num(pearson_penalty, nan=0.0, posinf=0.0, neginf=0.0)
+            # loss = loss_mse - pearson_coeff * pearson_penalty
+            
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+            norm_before = torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
             optimizer.step()
             pbar.update(1)
             pbar.set_postfix(loss=loss.item())
             wandb.log({
                 "train_loss": loss.item(),
                 "train_mse_loss": loss_mse.item(),
-                "train_pearson_penalty": pearson_penalty.item(),
+                # "train_pearson_penalty": pearson_penalty.item(),
                 "epoch": epoch,
                 "global_step": global_step,
+                "original_norm": norm_before,
             }, step=global_step)
             global_step += 1
         pbar.close()
@@ -145,7 +184,7 @@ def train(data_path = "./data/ordinary_dataset",
             "valid_spearman_corr": valid_spearman,
             "valid_c_index": valid_c_index,
             "epoch": epoch,
-        }, step=global_step)
+        }, step=(epoch + 1) * len(train_loader))
         model.train()
         # Save the best model
         
@@ -161,7 +200,7 @@ def train(data_path = "./data/ordinary_dataset",
             print("Best model updated w/ C-index:", best_metric)
     # Save the best model
     if best_model is not None:
-        os.makedirs("ckpt", exist_ok=True)
+        os.makedirs(f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}", exist_ok=True)
         torch.save(best_model, "ckpt/best_model.pth")
         print("Best model saved as best_model.pth")
     else:
@@ -172,7 +211,7 @@ if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Train the model.")
     parser.add_argument("--data_path", type=str, default="./data/ordinary_dataset", help="Path to the dataset")
-    parser.add_argument("--lr", type=float, default=5e-4, help="Learning rate")
+    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
     parser.add_argument("--dropout", type=float, default=0.1, help="Dropout rate")
     parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
     parser.add_argument("--n_epochs", type=int, default=200, help="Number of epochs")

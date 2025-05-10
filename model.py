@@ -134,15 +134,43 @@ class SFCNN(nn.Module):
         
     def forward(self, x):
         assert x.dim() == 5, "Input tensor must be 5D (batch_size, channels, depth, height, width)"
-        x = self.conv7(self.conv6(self.conv5(self.conv4(self.conv3(self.conv2(self.conv1(x))))))) # (b, 28, 20, 20, 20) -> (b, 224, 2, 2, 2)
+        x = self.conv3(self.conv2(self.conv1(x))) # (b, 28, 20, 20, 20) -> (b, 7, 16, 16, 16)
+        x = x.contiguous() # make sure the tensor is contiguous in memory
+        x = self.conv4(x)
+        x = self.conv5(x) # (b, 7, 16, 16, 16) -> (b, 56, 8, 8, 8)
+        x = self.conv6(x) # (b, 56, 8, 8, 8) -> (b, 112, 4, 4, 4)
+        x = self.conv7(x)
+        
+        # x = x.contiguous() # make sure the tensor is contiguous in memory
+        # breakpoint()
         x = self.flatten(x) # (b, 224, 2, 2, 2) -> (b, 224 * 2 * 2 * 2)
         x = self.fc1(x) # (b, 224 * 2 * 2 * 2) -> (b, 256)
         x = self.bn1(x) # (b, 256) -> (b, 256)
         x = F.relu(x) # (b, 256) -> (b, 256)
         x = self.drop(x)
         x = self.fc2(x) # (b, 256) -> (b, 1)
+        
         return x # TODO: normalized prediction. should multiply by 15 in final data processing step.
 
+def init_weights(m):
+    if isinstance(m, torch.nn.Conv3d):
+        torch.nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            torch.nn.init.zeros_(m.bias)
+    elif isinstance(m, torch.nn.Linear):
+        # torch.nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        import math
+        torch.nn.init.kaiming_uniform_(m.weight, a=math.sqrt(5))
+        m.weight.data.mul_(0.1) # TODO: check if this is correct
+        if m.bias is not None:
+            torch.nn.init.zeros_(m.bias)
+    elif isinstance(m, torch.nn.BatchNorm1d):
+        torch.nn.init.ones_(m.weight)
+        torch.nn.init.zeros_(m.bias)
+    elif isinstance(m, torch.nn.BatchNorm3d):
+        torch.nn.init.ones_(m.weight)
+        torch.nn.init.zeros_(m.bias)
+        
 def build_model(in_channels=28, dropout=0.5):
     """
     Build the model using the SFCNN class
@@ -152,21 +180,7 @@ def build_model(in_channels=28, dropout=0.5):
         dropout=dropout
     )
     # init the weight
-    for m in model.modules():
-        if isinstance(m, nn.Conv3d):
-            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
-        elif isinstance(m, nn.Linear):
-            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            if m.bias is not None:
-                nn.init.zeros_(m.bias)
-        elif isinstance(m, nn.BatchNorm1d):
-            nn.init.ones_(m.weight)
-            nn.init.zeros_(m.bias)
-        elif isinstance(m, nn.BatchNorm3d):
-            nn.init.ones_(m.weight)
-            nn.init.zeros_(m.bias)
+    model.apply(init_weights)
     return model
 
 # unit test
