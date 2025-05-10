@@ -1,5 +1,5 @@
 def extract_protein_sequence_from_pdb(pdb_file):
-    """Extract protein sequences from a pdb file, returning a dictionary keyed by chain ID.""" 
+    """Extract protein sequences from a pdb file, returning a dictionary keyed by chain ID."""
     three_to_one = {
         'ALA': 'A', 'CYS': 'C', 'ASP': 'D', 'GLU': 'E', 'PHE': 'F',
         'GLY': 'G', 'HIS': 'H', 'ILE': 'I', 'LYS': 'K', 'LEU': 'L',
@@ -10,17 +10,38 @@ def extract_protein_sequence_from_pdb(pdb_file):
         'PYL': 'O'   # Pyrrolysine
     }
     chain_sequences = {}
+    seqres_found = False
     with open(pdb_file, 'r') as f:
         for line in f:
             if line.startswith("SEQRES"):
+                seqres_found = True
                 parts = line.split()
-                # parts[2] is the chain ID and the subsequent parts are residues
                 chain = parts[2]
                 residues = parts[4:]
+                if chain not in chain_sequences:
+                    chain_sequences[chain] = []
                 for residue in residues:
                     aa = three_to_one.get(residue.upper(), "X")
-                    chain_sequences.setdefault(chain, "")
-                    chain_sequences[chain] += aa
+                    chain_sequences[chain].append(aa)
+    # 如果没有SEQRES，尝试用ATOM行提取
+    if not seqres_found:
+        seen = set()
+        with open(pdb_file, 'r') as f:
+            for line in f:
+                if line.startswith("ATOM"):
+                    resname = line[17:20].strip()
+                    chain = line[21].strip()
+                    resseq = line[22:26].strip()
+                    key = (chain, resseq)
+                    if key not in seen:
+                        seen.add(key)
+                        aa = three_to_one.get(resname.upper(), "X")
+                        if chain not in chain_sequences:
+                            chain_sequences[chain] = []
+                        chain_sequences[chain].append(aa)
+    # 转成字符串
+    for chain in chain_sequences:
+        chain_sequences[chain] = ''.join(chain_sequences[chain])
     return chain_sequences
 
 def extract_smiles_from_mol2(mol2_file):
