@@ -46,9 +46,9 @@ wget -c https://pdbbind.oss-cn-hangzhou.aliyuncs.com/download/CASF-2016.tar.gz
 ## Unzip the dataset
 ```sh
 mkdir data
-tar -zxvf PDBbind_v2020_refined.tar.gz -C data
+tar -zxvf PDBbind_v2019_refined.tar.gz -C data
 tar -zxvf CASF-2016.tar.gz -C data
-rm PDBbind_v2020_refined.tar.gz
+rm PDBbind_v2019_refined.tar.gz
 rm CASF-2016.tar.gz
 ```
 
