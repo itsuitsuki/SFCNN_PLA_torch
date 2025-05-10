@@ -61,6 +61,7 @@ cd ..
 ```
 For one complex, you can generate the SMILES for its ligand and the protein sequences by running the following command:
 ```sh
+pip install rdkit
 python data_processing/pdb_mol2_utils.py --name 1a30 # for example
 ```
 where the `pdb_path` and `mol2_path` (ligand) should be manually specified in the code.
