@@ -7,7 +7,7 @@ The implementation for Assessing the Reliability of AlphaFold3 Predictions for P
 Note that the environment is created with Python 3.7.12.
 
 ```sh
-conda create -n sfcnn python=3.7.12
+conda create -n sfcnn python=3.7
 conda activate sfcnn
 ```
 
@@ -34,7 +34,7 @@ The training set used in this project is PDBbind v2019 refined set. The test set
 
 PDBbind v2019:
 ```sh
-wget -c https://pdbbind.oss-cn-hangzhou.aliyuncs.com/download/PDBbind_v2020_refined.tar.gz
+wget -c https://pdbbind.oss-cn-hangzhou.aliyuncs.com/download/PDBbind_v2019_refined.tar.gz
 ```
 
 
