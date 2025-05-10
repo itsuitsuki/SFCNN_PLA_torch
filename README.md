@@ -58,7 +58,14 @@ First, run the code to create the folders of direct complex structures in CASF-2
 cd data_processing
 python create_complex_folders.py
 ```
-Then, run AlphaFold 3 or CHAI-1 and generate the complex structures, which should be run in their own servers or separate local environments. You should place the generated complex structures in 
+For one complex, you can generate the SMILES for its ligand and the protein sequences by running the following command:
+```sh
+cd data_processing
+python pdb_mol2_utils.py
+```
+where the `pdb_path` and `mol2_path` (ligand) should be manually specified in the code.
+
+Then, run AlphaFold 3 or CHAI-1 and generate the complex structures based on the acquired sequences as above, which should be run in their own servers or separate local environments. You should place the generated complex structures in 
 subfolders of `data/complexes_16`.
 
 You should stay in the `data_processing` folder and run the following command:
