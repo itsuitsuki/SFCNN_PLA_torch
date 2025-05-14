@@ -2,6 +2,7 @@ import os
 import glob
 import shutil
 from datasets import Dataset as HFDataset
+from datasets import Features, Array4D, Value
 from feature_utils import FeatureExtractor
 import random
 import openbabel as ob
@@ -76,6 +77,12 @@ with open(affinity_file, "r") as f:
         elif line[0] != '#' and line.split()[0] in test_complex_names:
             test_affinity[line.split()[0]] = float(line.split()[3])
 
+features = Features(
+    {
+        "grid": Array4D(dtype="float32", shape=(28, 20, 20, 20)),
+        "label": Value(dtype="float32"), # (10,)
+    }
+)
 train_grids = []
 train_labels = []
 for complex_name in tqdm(train_complex_names, desc="Processing train complexes"):
@@ -95,10 +102,10 @@ for complex_name in tqdm(train_complex_names, desc="Processing train complexes")
     assert coords_cat.shape[0] == features_cat.shape[0], "coords and features should have the same number of atoms"
     coords_cat = coords_cat - center
     grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20, 28)
-    
+    grid = np.transpose(grid, (0, 4, 1, 2, 3)) # shape (10, 28, 20, 20, 20)
     train_labels += [train_affinity[complex_name + "_" + str(i)] for i in range(N_ROTATE)]
     train_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (1, 20, 20, 20, 28)
-train_dataset = HFDataset.from_dict({"grid": train_grids, "label": train_labels})
+train_dataset = HFDataset.from_dict({"grid": train_grids, "label": train_labels}, features=features)
 # save the train_affinity dict -> arrow
 train_dataset.save_to_disk("../data/ordinary_dataset/train")
 
@@ -118,11 +125,11 @@ for complex_name in tqdm(valid_complex_names, desc="Processing valid complexes")
     features_cat = np.concatenate((features1, features2), axis=0)
     assert coords_cat.shape[0] == features_cat.shape[0], "coords and features should have the same number of atoms"
     coords_cat = coords_cat - center
-    grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20)
-    
+    grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20, 28)
+    grid = np.transpose(grid, (0, 4, 1, 2, 3)) # shape (10, 28, 20, 20, 20)
     valid_labels += [valid_affinity[complex_name + "_" + str(i)] for i in range(N_ROTATE)]
     valid_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (20, 20, 20, 28)
-valid_dataset = HFDataset.from_dict({"grid": valid_grids, "label": valid_labels})
+valid_dataset = HFDataset.from_dict({"grid": valid_grids, "label": valid_labels}, features=features)
 # save the valid_affinity dict -> arrow
 valid_dataset.save_to_disk("../data/ordinary_dataset/valid")
 
@@ -145,13 +152,16 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes"):
     assert coords_cat.shape[0] == features_cat.shape[0], "coords and features should have the same number of atoms"
     coords_cat = coords_cat - center
     grid = extractor.grid(coords_cat, features_cat, n_amplification=0) # shape (1, 20, 20, 20, 28)
+    # permute 0,4,1,2,3
+    # Use numpy’s transpose to permute axes (equivalent to torch.permute)
+    grid = np.transpose(grid, (0, 4, 1, 2, 3))  # shape (1, 28, 20, 20, 20)
     # save in the dict, torch
     # grid = torch.tensor(grid, dtype=torch.float32)
 
-    test_grids.append(grid.squeeze(0)) # each grid is a tensor shape (20, 20, 20, 28)
+    test_grids.append(torch.tensor(grid.squeeze(0))) # each grid is a tensor shape (20, 20, 20, 28)
     test_labels.append(test_affinity[complex_name])
 
 # values of the test_affinity dict -> lists
-test_dataset = HFDataset.from_dict({"grid": test_grids, "label": test_labels})
+test_dataset = HFDataset.from_dict({"grid": test_grids, "label": test_labels}, features=features)
 # save the test_affinity dict -> arrow
 test_dataset.save_to_disk("../data/ordinary_dataset/test")

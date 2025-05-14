@@ -55,7 +55,9 @@ class ConvBlock3dPool(nn.Module):
         
     def forward(self, x):
         assert x.dim() == 5, "Input tensor must be 5D (batch_size, channels, depth, height, width)"
+        # print(x.shape)
         x = self.conv(x)
+        # print(x.shape)
         x = self.bn(x)
         x = F.relu(x)
         x = self.pool(x)
@@ -183,21 +185,21 @@ def build_model(in_channels=28, dropout=0.5):
     model.apply(init_weights)
     return model
 
-# unit test
-if __name__ == "__main__" and False:
-    # test the model
-    model = SFCNN()
-    x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
-    y = model(x)
-    print(y.shape) # should be (2, 1)
-    # test the ConvBlock3d
-    conv_block = ConvBlock3d(28, 7, kernel_size=(1, 1, 1))
-    x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
-    y = conv_block(x)
-    print(y.shape) # should be (2, 7, 20, 20, 20)
-    # test the ConvBlock3dPool
-    conv_block_pool = ConvBlock3dPool(28, 7, kernel_size=(1, 1, 1))
-    x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
-    y = conv_block_pool(x)
-    print(y.shape) # should be (2, 7, 20, 20, 20)
+# # unit test
+# if __name__ == "__main__" and False:
+#     # test the model
+#     model = SFCNN()
+#     x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
+#     y = model(x)
+#     print(y.shape) # should be (2, 1)
+#     # test the ConvBlock3d
+#     conv_block = ConvBlock3d(28, 7, kernel_size=(1, 1, 1))
+#     x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
+#     y = conv_block(x)
+#     print(y.shape) # should be (2, 7, 20, 20, 20)
+#     # test the ConvBlock3dPool
+#     conv_block_pool = ConvBlock3dPool(28, 7, kernel_size=(1, 1, 1))
+#     x = torch.randn(2, 28, 20, 20, 20) # (batch_size, channels, depth, height, width)
+#     y = conv_block_pool(x)
+#     print(y.shape) # should be (2, 7, 20, 20, 20)
     
