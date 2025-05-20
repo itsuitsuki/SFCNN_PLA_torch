@@ -113,5 +113,11 @@ data
 # Training
 ## Using Slurm
 ```sh
-srun -G1 -c2 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --batch_size 512
+srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --batch_size 32 --num_workers 8
+```
+
+## Optuna Hyperparameter Tuning
+We disable wandb.
+```sh
+WANDB_DISABLED=1 srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train_optuna.py --n_trials 50 --total_cpus 8 --n_jobs 2
 ```

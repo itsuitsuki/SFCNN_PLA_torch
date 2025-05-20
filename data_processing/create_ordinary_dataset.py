@@ -2,7 +2,7 @@ import os
 import glob
 import shutil
 from datasets import Dataset as HFDataset
-from datasets import Features, Array4D, Value
+from datasets import Features, Array4D, Value, concatenate_datasets
 from feature_utils import FeatureExtractor
 import random
 import openbabel as ob
@@ -79,7 +79,7 @@ with open(affinity_file, "r") as f:
 
 features = Features(
     {
-        "grid": Array4D(dtype="float32", shape=(28, 20, 20, 20)),
+        "grid": Array4D(dtype="int32", shape=(28, 20, 20, 20)),
         "label": Value(dtype="float32"), # (10,)
     }
 )
@@ -104,8 +104,22 @@ for complex_name in tqdm(train_complex_names, desc="Processing train complexes")
     grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20, 28)
     grid = np.transpose(grid, (0, 4, 1, 2, 3)) # shape (10, 28, 20, 20, 20)
     train_labels += [train_affinity[complex_name + "_" + str(i)] for i in range(N_ROTATE)]
-    train_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (1, 20, 20, 20, 28)
-train_dataset = HFDataset.from_dict({"grid": train_grids, "label": train_labels}, features=features)
+    train_grids += [grid[i] for i in range(N_ROTATE)] # each grid is a tensor shape (1, 20, 20, 20, 28)
+chunk_size = 500
+
+# build a list of Datasets, one per chunk
+dataset_chunks = []
+for i in range(0, len(train_grids), chunk_size):
+    grids_chunk = train_grids[i : i + chunk_size]
+    labels_chunk = train_labels[i : i + chunk_size]
+    ds_chunk = HFDataset.from_dict(
+        {"grid": grids_chunk, "label": labels_chunk},
+        features=features
+    )
+    dataset_chunks.append(ds_chunk)
+
+# stitch them back together
+train_dataset = concatenate_datasets(dataset_chunks)
 # save the train_affinity dict -> arrow
 train_dataset.save_to_disk("../data/ordinary_dataset/train")
 
@@ -128,7 +142,7 @@ for complex_name in tqdm(valid_complex_names, desc="Processing valid complexes")
     grid = extractor.grid(coords_cat, features_cat) # shape (10, 20, 20, 20, 28)
     grid = np.transpose(grid, (0, 4, 1, 2, 3)) # shape (10, 28, 20, 20, 20)
     valid_labels += [valid_affinity[complex_name + "_" + str(i)] for i in range(N_ROTATE)]
-    valid_grids += [torch.tensor(grid[i], dtype=torch.float32) for i in range(N_ROTATE)] # each grid is a tensor shape (20, 20, 20, 28)
+    valid_grids += [grid[i] for i in range(N_ROTATE)] # each grid is a tensor shape (20, 20, 20, 28)
 valid_dataset = HFDataset.from_dict({"grid": valid_grids, "label": valid_labels}, features=features)
 # save the valid_affinity dict -> arrow
 valid_dataset.save_to_disk("../data/ordinary_dataset/valid")
@@ -158,7 +172,7 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes"):
     # save in the dict, torch
     # grid = torch.tensor(grid, dtype=torch.float32)
 
-    test_grids.append(torch.tensor(grid.squeeze(0))) # each grid is a tensor shape (20, 20, 20, 28)
+    test_grids.append(grid.squeeze(0)) # each grid is a tensor shape (20, 20, 20, 28)
     test_labels.append(test_affinity[complex_name])
 
 # values of the test_affinity dict -> lists

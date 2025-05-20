@@ -5,6 +5,8 @@
 wandb/
 data/CASF-2016
 data/refined-set
+debug/*
+debug/
 
 # Only Apple Can Do
 .DS_Store

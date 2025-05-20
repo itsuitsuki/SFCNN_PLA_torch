@@ -11,6 +11,19 @@ from scipy.stats import spearmanr
 from lifelines.utils import concordance_index
 DEBUG = False
 
+def seed_everything(seed=42):
+    """Set all random seeds to the same value for reproducibility."""
+    import random
+    import numpy as np
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    print(f"Random seed set to {seed}")
+seed_everything()
 def train(data_path = "./data/ordinary_dataset",
           init_lr = 1e-4,
           lr = 4e-3,
@@ -21,6 +34,8 @@ def train(data_path = "./data/ordinary_dataset",
           batch_size = 64,
           max_grad_norm = 3.0,
           num_workers = 16,
+          do_optuna=False,
+          trial_number=None,
         ):
     train_dataset = HFDataset.load_from_disk(os.path.join(data_path, "train"))
     train_dataset.set_format(type="torch", columns=["grid", "label"])
@@ -38,8 +53,8 @@ def train(data_path = "./data/ordinary_dataset",
     # print(f"Last layer parameters: {last_layer_param_names}")
     other_params = [p for n, p in model.named_parameters() if n!="fc2.weight"]
     # total num of params
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f"Total number of parameters: {total_params}")
+    # total_params = sum(p.numel() for p in model.parameters())
+    # print(f"Total number of parameters: {total_params}")
     
     optimizer = torch.optim.RMSprop(
         [
@@ -117,25 +132,26 @@ def train(data_path = "./data/ordinary_dataset",
         print("-" * 50)
         print(f"Epoch {epoch+1}/{n_epochs}")
         pbar = tqdm(total=len(train_loader), desc=f"Training epoch {epoch+1}/{n_epochs}", disable=False)
-        import time
-        starttime = time.time()
+        # import time
+        # starttime = time.time()
+        model.train()
         for batch in train_loader:
-            print(f"Load time: {time.time() - starttime:.5f}s")
-            starttime = time.time()
-            
-            model.train()
+            # print(f"Load time: {time.time() - starttime:.5f}s")
+            # starttime = time.time()
             grids = batch["grid"].to(device) # shape (64, 20, 20, 20, 28)
+            # grids to float
+            grids = grids.float()
             # normalize the grid
-            grids = (grids - grids.mean()) / grids.std()
+            # grids = (grids - grids.mean()) / grids.std()
             # print(f"batch size this step = {grids.size(0)}")
             # print("Sum of grids:", grids.sum())
             # NOTE: NORMALIZE
             labels = batch["label"].to(device) / 15.
-            
-            starttime = time.time()
-            outputs = model(grids.permute(0, 4, 1, 2, 3)) # shape (64, 1)
-            print(f"Forward time: {time.time() - starttime:.5f}s")
-            starttime = time.time()
+            labels = labels.unsqueeze(1) # shape (64, 1)
+            # starttime = time.time()
+            outputs = model(grids) # shape (64, 1)
+            # print(f"Forward time: {time.time() - starttime:.5f}s")
+            # starttime = time.time()
             loss = mse_loss_fn(outputs, labels)
             loss.backward()
 
@@ -152,16 +168,17 @@ def train(data_path = "./data/ordinary_dataset",
             scheduler.step()
             optimizer.zero_grad()
             pbar.update(1)
-            print(f"Backward time: {time.time() - starttime:.5f}s")
-            print("Loss:", loss.item())
+            # print(f"Backward time: {time.time() - starttime:.5f}s")
+            # print("Loss:", loss.item())
             pbar.set_postfix(loss=loss.item())
-            wandb.log({
-                "train_mse_loss": loss.item(),
-                "epoch": epoch,
-                "global_step": global_step,
-                "original_grad_norm": norm_before,
-                "lr": optimizer.param_groups[0]["lr"],
-            }, step=global_step)
+            if not do_optuna:
+                wandb.log({
+                    "train_mse_loss": loss.item(),
+                    "epoch": epoch,
+                    "global_step": global_step,
+                    "original_grad_norm": norm_before,
+                    "lr": optimizer.param_groups[0]["lr"],
+                }, step=global_step)
             global_step += 1
         pbar.close()
         print(f"Epoch {epoch+1}/{n_epochs} completed.")
@@ -170,19 +187,24 @@ def train(data_path = "./data/ordinary_dataset",
         with torch.no_grad():
             model.eval()
             valid_maes = []
+            valid_mses = []
             valid_pred = []
             valid_labels = []
             for batch in tqdm(valid_loader, desc="Validating"):
                 grids = batch["grid"].to(device) # should permute (0, 4, 1, 2, 3)
+                grids = grids.float()
                 # NOTE: NORMALIZE
                 labels = batch["label"].to(device) / 15.
-                outputs = model(grids.permute(0, 4, 1, 2, 3)) # shape (64, 1)
+                outputs = model(grids) # shape (64, 1)
                 valid_pred.append(outputs.cpu())
                 valid_labels.append(labels.cpu())
+                labels = labels.unsqueeze(1) # shape (64, 1)
                 mse = mse_loss_fn(outputs, labels)
                 mae = mae_loss_fn(outputs, labels)
                 valid_maes.append(mae.item())
-            valid_mae = sum(valid_maes) / len(valid_maes)
+                valid_mses.append(mse.item())
+            valid_mse = sum(valid_mses) / len(valid_mses) * 15.0**2
+            valid_mae = sum(valid_maes) / len(valid_maes) * 15.0
             print(f"Validation Loss: {valid_mae:.4f}")
             # pearson
             valid_pred = np.concatenate(valid_pred)
@@ -196,11 +218,19 @@ def train(data_path = "./data/ordinary_dataset",
                 valid_pearson = np.corrcoef(valid_pred.flatten(), valid_labels.flatten())[0, 1]
             valid_spearman = spearmanr(valid_pred.flatten(), valid_labels.flatten()).correlation
             valid_c_index = concordance_index(valid_labels.flatten(), valid_pred.flatten())
-            
-            # Save the best model
-            print("Pearson Correlation:", valid_pearson)
-            print("Spearman Correlation:", valid_spearman)
-            print("Concordance Index:", valid_c_index)
+            # if debug, plot preds and labels
+            if DEBUG and not do_optuna:
+                import matplotlib.pyplot as plt
+                plt.scatter(valid_labels.flatten(), valid_pred.flatten())
+                plt.xlabel("Labels")
+                plt.ylabel("Predictions")
+                plt.title(f"Epoch {epoch+1} - Pearson: {valid_pearson:.4f}, Spearman: {valid_spearman:.4f}, C-index: {valid_c_index:.4f}")
+                plt.savefig(f"debug/preds_labels_epoch_{epoch+1}.png")
+                plt.close()
+                # Save the best model
+                print("Pearson Correlation:", valid_pearson)
+                print("Spearman Correlation:", valid_spearman)
+                print("Concordance Index:", valid_c_index)
             # if valid_mae < best_valid_mae:
             #     best_valid_mae = valid_mae
             # if valid_c_index > best_metric:
@@ -208,23 +238,31 @@ def train(data_path = "./data/ordinary_dataset",
             if valid_pearson > best_valid_pearson:
                 best_valid_pearson = valid_pearson
                 best_model = deepcopy(model.state_dict()) if not isinstance(model, torch.nn.DataParallel) else deepcopy(model.module.state_dict())
-                print("Best model updated w/ Valid MAE:", best_valid_mae)
-            wandb.log({
-                "valid_mse_loss": valid_mae,
-                "valid_pearson_corr": valid_pearson,
-                "valid_spearman_corr": valid_spearman,
-                "valid_c_index": valid_c_index,
-                "valid_mae_loss": valid_mae,
-                "epoch": epoch,
-            }, step=(epoch + 1) * len(train_loader))
+                # print("Best model updated w/ Valid MAE:", best_valid_mae)
+                print("Best model updated w/ Valid Pearson Correlation:", best_valid_pearson)
+            if not do_optuna:
+                wandb.log({
+                    "valid_mse_loss": valid_mse,
+                    "valid_pearson_corr": valid_pearson,
+                    "valid_spearman_corr": valid_spearman,
+                    "valid_c_index": valid_c_index,
+                    "valid_mae_loss": valid_mae,
+                    "best_valid_pearson": best_valid_pearson,
+                    "epoch": epoch,
+                }, step=(epoch + 1) * len(train_loader))
     # Save the best model
-    if best_model is not None:
+    if do_optuna:
+        pass
+    elif best_model is not None:
         os.makedirs(f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}", exist_ok=True)
-        torch.save(best_model, "ckpt/best_model.pth")
+        torch.save(best_model, f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}/best_model.pth")
         print("Best model saved as best_model.pth")
     else:
         raise ValueError("No model was saved. Check the training process.")
-    return best_model
+    wandb.finish()
+    if trial_number is not None:
+        print(f"Trial {trial_number} finished with best Pearson: {best_valid_pearson}")
+    return best_model, best_valid_pearson
     
 if __name__ == "__main__":
     # Parse command line arguments
