@@ -3,7 +3,7 @@ import glob
 import shutil
 from datasets import Dataset as HFDataset
 from datasets import Features, Array4D, Value, concatenate_datasets
-from feature_utils import FeatureExtractor
+from feature_utils import FeatureExtractorPDB
 import random
 import openbabel as ob
 from openbabel import pybel
@@ -56,7 +56,7 @@ train_complex_names = train_complex_names[:N_SAMPLES_TRAIN]
 print("len(train_complex_names):", len(train_complex_names))
 print("len(valid_complex_names):", len(valid_complex_names))
 
-extractor = FeatureExtractor()
+extractor = FeatureExtractorPDB()
 
 # train dir/index/INDEX_general_PL_data.2019
 affinity_file = os.path.join(train_data_dir, "index", "INDEX_general_PL_data.2019")

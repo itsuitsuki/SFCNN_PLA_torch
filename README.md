@@ -119,5 +119,5 @@ srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --b
 ## Optuna Hyperparameter Tuning
 We disable wandb.
 ```sh
-WANDB_DISABLED=1 srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train_optuna.py --n_trials 50 --total_cpus 8 --n_jobs 2
+WANDB_DISABLED=1 srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train_optuna.py --n_trials 50 --total_cpus 8 --n_jobs 2 --n_epochs 150
 ```

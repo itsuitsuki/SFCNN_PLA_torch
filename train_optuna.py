@@ -16,11 +16,11 @@ def objective(trial: optuna.Trial,
     # # last_dense_wd: 对数均匀分布，例如 1e-4 到 1e-1
     # last_dense_wd = trial.suggest_loguniform("last_dense_wd", 1e-4, 1e-1)
 
-    lr = trial.suggest_float("lr", 1e-5, 1e-2, log=True)
+    lr = trial.suggest_float("lr", 1e-4, 1e-2, log=True)
     dropout = trial.suggest_float("dropout", 0.0, 0.5)
     last_dense_wd = trial.suggest_float("last_dense_wd", 1e-4, 1e-1, log=True)
     # batch_size = trial.suggest_int("batch_size", 16, 128, step=16) 
-    batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128])
+    batch_size = trial.suggest_categorical("batch_size", [16, 32, 64])
 
     # Calculate num_workers per trial
     # 确保至少分配 1 个 worker
@@ -49,6 +49,8 @@ def objective(trial: optuna.Trial,
 
     # Call the train function with suggested hyperparameters and calculated num_workers
     # You might want to reduce n_epochs or batch_size here for faster tuning if needed
+    # initialized params print:
+    print(f"Trial {trial.number}: lr={lr:.0e}, dropout={dropout:.2f}, last_dense_wd={last_dense_wd:.0e}, batch_size={batch_size}, dropout={dropout}")
     _, pearson_correlation = train(
         data_path="./data/ordinary_dataset", # Fixed parameters
         init_lr=1e-4, # Fixed init_lr

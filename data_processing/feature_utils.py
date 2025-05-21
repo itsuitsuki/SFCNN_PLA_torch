@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 # Converts the protein-ligand complexes into 4D tensor. 
-class FeatureExtractor():
+class FeatureExtractorPDB():
     def __init__(self):
         self.atom_codes = {}
         # 'others' includs metal atoms and B atom. There are no B atoms on training and test sets. 
@@ -148,7 +148,7 @@ class FeatureExtractor():
         return grid
 
 def test_get_grid(protein, ligand):
-    Feature = FeatureExtractor()
+    Feature = FeatureExtractorPDB()
     coords1, features1 = Feature.get_features(protein,1)
     coords2, features2 = Feature.get_features(ligand,0)
     

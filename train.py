@@ -23,9 +23,10 @@ def seed_everything(seed=42):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
     print(f"Random seed set to {seed}")
+    
 seed_everything()
 def train(data_path = "./data/ordinary_dataset",
-          init_lr = 1e-4,
+          init_lr = 1e-5,
           lr = 4e-3,
           warmup_steps = 200,
           dropout = 0.1,
@@ -250,6 +251,9 @@ def train(data_path = "./data/ordinary_dataset",
                     "best_valid_pearson": best_valid_pearson,
                     "epoch": epoch,
                 }, step=(epoch + 1) * len(train_loader))
+            if valid_mse > 10:
+                print("Validation MSE is too high. Discard.")
+                break
     # Save the best model
     if do_optuna:
         pass
