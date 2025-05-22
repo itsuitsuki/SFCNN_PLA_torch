@@ -3,7 +3,7 @@ import glob
 import shutil
 from datasets import Dataset as HFDataset
 from datasets import Features, Array4D, Value, concatenate_datasets
-from feature_utils import FeatureExtractorPDB
+from data_processing.pdb_parsing import FeatureExtractorPDB
 import random
 import openbabel as ob
 from openbabel import pybel
@@ -90,9 +90,9 @@ for complex_name in tqdm(train_complex_names, desc="Processing train complexes")
     mol2_file = os.path.join(train_data_dir, complex_name, complex_name + "_ligand.mol2")
     pdb_file = os.path.join(train_data_dir, complex_name, complex_name + "_protein.pdb")
     # print(mol2_file, pdb_file)
-    ligand = pybel.readfile("mol2", mol2_file).__next__() # the very first one ligand molecule
+    ligand = pybel.readfile("mol2", mol2_file).__next__()
     # print(ligand)
-    protein = pybel.readfile("pdb", pdb_file).__next__() # the very first one protein molecule
+    protein = pybel.readfile("pdb", pdb_file).__next__()
     # print(protein)
     coords1, features1 = extractor.get_features(protein, 1) # protein, shape 
     coords2, features2 = extractor.get_features(ligand, 0) # ligand

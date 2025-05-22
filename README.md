@@ -52,27 +52,7 @@ rm PDBbind_v2019_refined.tar.gz
 rm CASF-2016.tar.gz
 ```
 
-## Create the direct-complex dataset
-First, run the code to create the folders of direct complex structures in CASF-2016 core set.
-```sh
-cd data_processing
-python create_complex_folders.py
-cd ..
-```
-For one complex, you can generate the SMILES for its ligand and the protein sequences by running the following command:
-```sh
-pip install rdkit
-python data_processing/pdb_mol2_utils.py --name 1a30 # for example
-```
-where the `pdb_path` and `mol2_path` (ligand) should be manually specified in the code.
-
-Then, run AlphaFold 3 or CHAI-1 and generate the complex structures based on the acquired sequences as above, which should be run in their own servers or separate local environments. You should place the generated complex structures in 
-subfolders of `data/complexes_16`.
-
-You should stay in the `data_processing` folder and run the following command:
-
-
-## Create the protein-ligand complex dataset files (Arrow format)
+## Create the Real Structure Dataset (CASF-16, PLA, Arrow Format)
 Based on the last step, you are still in the `data_processing` folder. You can run the following command to create the ordinary dataset files (training & validation & testing) in Arrow format.
 ```sh
 cd data_processing
@@ -81,6 +61,48 @@ cd ..
 ```
 
 Canonical dataset arrow files will be save in `data/ordinary_dataset` folder.
+
+## Create the CHAI-1 Predicted Structure Dataset (Bootstrapped on CASF-16 sequences, PLA, Arrow Format)
+### Folder Creation
+First, run the code to create the folders of direct complex structures in CASF-2016 core set.
+```sh
+cd data_processing
+python create_complex_folders.py
+cd ..
+```
+
+### Sequence Extraction
+For one complex, you can generate the SMILES for its ligand and the protein sequences by running the following command:
+```sh
+pip install rdkit
+python data_processing/pdb_mol2_to_seq.py --name 1a30 # for example
+```
+where the `pdb_path` and `mol2_path` (ligand) should be manually specified in the code.
+
+Then, run AlphaFold 3 or CHAI-1 and generate the complex structures based on the acquired sequences as above, which should be run in their own servers or separate local environments. You should place the generated complex structures in 
+subfolders of `data/complexes_16`.
+
+
+### CIF Parsing: Hybridization Information
+Since CIF (MMCIF) files don't provide the hybridization information, but only the atoms (elements) and their coordinates, 
+we must find a way to get the hybridization information of carbon, nitrogen and sulfur atoms to 
+generate the same fashion of encoding as the original SFCNN paper as well as the way in the real structure dataset.
+
+We create the dataset on the predicted structures by two ways:
+1. By Heuristics: We infer the hybridization from contextual information (e.g. the residue type, the atom's neighbors, etc.)
+2. From PDB files: We use the gold (annotated/ground truth) hybridization information from the PDB files in the real structure dataset (CASF-16).
+
+### Hybridization-by-Heuristic Encoding
+```sh
+python data_processing/create_pred_dataset.py --encoding heuristic
+```
+
+### Hybridization-by-PDB Encoding # TODO
+```sh
+python data_processing/create_pred_dataset.py --encoding gold
+```
+
+
 
 ## File structure
 ```sh
@@ -99,7 +121,7 @@ data
 │   └── power_scoring
 ├── complexes_16
 │   ├── 1a30
-│   │   └── ...
+│   │   └── pred.rank_0.cif
 │   └── ...
 └── refined-set
     ├── 1a1e

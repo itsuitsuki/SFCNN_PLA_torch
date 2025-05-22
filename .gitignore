@@ -8,6 +8,7 @@ data/refined-set
 debug/*
 debug/
 ckpt/*
+data/*_test
 
 # Only Apple Can Do
 .DS_Store
