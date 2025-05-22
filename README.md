@@ -113,7 +113,7 @@ data
 # Training
 ## Using Slurm
 ```sh
-srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --batch_size 32 --num_workers 8
+srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --batch_size 32 --num_workers 8 --last_dense_wd 0.0638 --lr 0.00445 --dropout 0.3625
 ```
 
 ## Optuna Hyperparameter Tuning

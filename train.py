@@ -26,7 +26,7 @@ def seed_everything(seed=42):
     
 seed_everything()
 def train(data_path = "./data/ordinary_dataset",
-          init_lr = 1e-5,
+          init_lr = 1e-4, # 1e-5??
           lr = 4e-3,
           warmup_steps = 200,
           dropout = 0.1,
@@ -204,9 +204,10 @@ def train(data_path = "./data/ordinary_dataset",
                 mae = mae_loss_fn(outputs, labels)
                 valid_maes.append(mae.item())
                 valid_mses.append(mse.item())
-            valid_mse = sum(valid_mses) / len(valid_mses) * 15.0**2
-            valid_mae = sum(valid_maes) / len(valid_maes) * 15.0
-            print(f"Validation Loss: {valid_mae:.4f}")
+            valid_mse = sum(valid_mses) / len(valid_mses)
+            valid_mae = sum(valid_maes) / len(valid_maes)
+            print(f"Validation MAE: {valid_mae:.4f}")
+            print(f"Validation MSE: {valid_mse:.4f}")
             # pearson
             valid_pred = np.concatenate(valid_pred)
             valid_labels = np.concatenate(valid_labels)
@@ -228,6 +229,7 @@ def train(data_path = "./data/ordinary_dataset",
                 plt.title(f"Epoch {epoch+1} - Pearson: {valid_pearson:.4f}, Spearman: {valid_spearman:.4f}, C-index: {valid_c_index:.4f}")
                 plt.savefig(f"debug/preds_labels_epoch_{epoch+1}.png")
                 plt.close()
+            if not do_optuna:
                 # Save the best model
                 print("Pearson Correlation:", valid_pearson)
                 print("Spearman Correlation:", valid_spearman)
@@ -251,15 +253,15 @@ def train(data_path = "./data/ordinary_dataset",
                     "best_valid_pearson": best_valid_pearson,
                     "epoch": epoch,
                 }, step=(epoch + 1) * len(train_loader))
-            if valid_mse > 10:
+            if valid_mse > 10 and do_optuna:
                 print("Validation MSE is too high. Discard.")
                 break
     # Save the best model
     if do_optuna:
         pass
     elif best_model is not None:
-        os.makedirs(f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}", exist_ok=True)
-        torch.save(best_model, f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}/best_model.pth")
+        os.makedirs(f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}_bs{batch_size}", exist_ok=True)
+        torch.save(best_model, f"ckpt/sfcnn_lr{lr}_dropout{dropout}_wd{last_dense_wd}_bs{batch_size}/best_model.pth")
         print("Best model saved as best_model.pth")
     else:
         raise ValueError("No model was saved. Check the training process.")
