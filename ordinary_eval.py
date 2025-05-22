@@ -23,7 +23,7 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
     print("Starting evaluation...")
     print(f"Using device: {device}")
     model = model.to(device)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs")
@@ -73,7 +73,7 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate the model")
     parser.add_argument("--data_path", type=str, default="./data/ordinary_dataset", help="Path to the dataset")
-    parser.add_argument("--model_path", type=str, default="./ckpt/best_model.pth", help="Path to the model")
+    parser.add_argument("--model_path", type=str, help="Path to the model", required=True)
     parser.add_argument("--batch_size", type=int, default=64, help="Batch size for evaluation")
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers for DataLoader")
     args = parser.parse_args()

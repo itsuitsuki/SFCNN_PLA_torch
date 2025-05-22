@@ -36,6 +36,7 @@ features = Features(
         "grid": Array4D(dtype="int32", shape=(28, 20, 20, 20)),
         "label": Value(dtype="float32"), # (10,)
         "name": Value(dtype="string"), # (10,)
+        "pLDDT": Value(dtype="float32"), # (10,)
     }
 )
 
@@ -44,6 +45,7 @@ test_grids = []
 test_labels = []
 test_affinity = {}
 test_names = []
+test_plddt = []
 with open("data/refined-set/index/INDEX_general_PL_data.2019", "r") as f:
     for line in f.readlines():
         if line[0] != '#' and line.split()[0] in test_complex_names:
@@ -59,7 +61,7 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes", t
         print(f"File {cplx_path} not found, skipping...")
         continue
     structure = parser.get_structure(complex_name, cplx_path)
-    coords_protein, features_protein, coords_ligand, features_ligand = extractor.get_features(structure, args.encoding)
+    coords_protein, features_protein, coords_ligand, features_ligand, b_factors_as_plddts = extractor.get_features(structure, args.encoding)
     center = np.mean(coords_ligand, axis=0)
     coords_cat = np.concatenate((coords_protein, coords_ligand), axis=0)
     features_cat = np.concatenate((features_protein, features_ligand), axis=0)
@@ -69,12 +71,14 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes", t
     test_grids.append(grid.squeeze(0)) # each grid is a tensor shape (20, 20, 20, 28)
     test_labels.append(test_affinity[complex_name]) # each label is a float
     test_names.append(complex_name) # each name is a string
+    test_plddt.append(np.mean(b_factors_as_plddts)) # aggregate pLDDT
     
 test_dataset = HFDataset.from_dict(
     {
         "grid": test_grids,
         "label": test_labels,
         "name": test_names,
+        "pLDDT": test_plddt,
     },
     features=features,
 )

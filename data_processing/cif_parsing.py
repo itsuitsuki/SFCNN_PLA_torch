@@ -157,9 +157,9 @@ class FeatureExtractorCIF():
         features_protein = []
         coords_ligand = []
         features_ligand = []
+        b_factors_as_plddts = []
         for model in complex_structure:
             for chain in model:
-                
                 for residue in chain:
                     residue_hetfield = residue.id[0]
                     if residue_hetfield == " ": # protein
@@ -169,6 +169,7 @@ class FeatureExtractorCIF():
                     else:
                         raise ValueError(f"Unknown residue hetfield: {residue_hetfield} in {complex_structure.id}")
                     for atom in residue:
+                        b_factors_as_plddts.append(atom.get_bfactor())
                         # print(f"Atom ID: {atom.get_id()}, Element: {atom.element}, Coordinate: {atom.coord}")
                         element = atom.element
                         atomicnum = self.element_to_atomic_num.get(element, None)
@@ -199,7 +200,7 @@ class FeatureExtractorCIF():
         features_protein = np.array(features_protein, dtype=np.float32) # shape [num_atoms, 28]
         coords_ligand = np.array(coords_ligand, dtype=np.float32) # shape [num_atoms, 3]
         features_ligand = np.array(features_ligand, dtype=np.float32) # shape [num_atoms, 28]
-        return coords_protein, features_protein, coords_ligand, features_ligand
+        return coords_protein, features_protein, coords_ligand, features_ligand, b_factors_as_plddts
     
     # Define the rotation matrixs of 3D stuctures.
     def rotation_matrix(self, t, roller):

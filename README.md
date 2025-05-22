@@ -55,9 +55,7 @@ rm CASF-2016.tar.gz
 ## Create the Real Structure Dataset (CASF-16, PLA, Arrow Format)
 Based on the last step, you are still in the `data_processing` folder. You can run the following command to create the ordinary dataset files (training & validation & testing) in Arrow format.
 ```sh
-cd data_processing
-python create_ordinary_dataset.py
-cd ..
+python data_processing/create_ordinary_dataset.py
 ```
 
 Canonical dataset arrow files will be save in `data/ordinary_dataset` folder.
@@ -142,4 +140,10 @@ srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train.py --n_epochs 200 --b
 We disable wandb.
 ```sh
 WANDB_DISABLED=1 srun -G1 -c8 --mem=1M --time=5-00:00:00 -X -u python train_optuna.py --n_trials 50 --total_cpus 8 --n_jobs 2 --n_epochs 150
+```
+
+# Evaluation
+## Real Structure Dataset
+```sh
+python ordinary_eval.py --model_path <model_path> --batch_size 64 --num_workers 8
 ```
