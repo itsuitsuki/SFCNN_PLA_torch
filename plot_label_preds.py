@@ -84,20 +84,24 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     print(f"Heuristic Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}, p-value: {boostrapped_label_pred_corr[1]:.4f}")
     print(f"Mutual Prediction Correlation: {mutual_pred_corr[0]:.4f}, p-value: {mutual_pred_corr[1]:.4f}")
     # Plot the predictions
-    plt.figure(figsize=(10, 10))
-    plt.scatter(pred1, label12, alpha=0.75, label="Ordinary Dataset")
-    plt.scatter(pred2, label12, alpha=0.75, label="Heuristic Dataset")
-    plt.scatter(label12, label12, alpha=0.75, label="Labels")
-    # print the correlations onto the plot, only corr values
-    # right-down corner
-    # plt.text(0.95, 0.05, f"Ordinary Dataset Label-Prediction Correlation: {ordinary_label_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
-    # plt.text(0.95, 0.10, f"Heuristic Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
-    # plt.text(0.95, 0.15, f"Mutual Prediction Correlation: {mutual_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
-    # plt.plot([0, 15], [0, 15], color='black', linestyle='--', label="y = x")
-    
-    plt.xlabel("Predictions")
-    plt.ylabel("True Labels")
-    plt.title("Predictions vs True Labels (n = {})".format(len(common_names)))
+    fig, axes = plt.subplots(1, 2, figsize=(20, 10), sharey=True)
+
+    # Ordinary Dataset subplot
+    axes[0].scatter(pred1, label12, alpha=0.75, label="Ordinary Dataset")
+    axes[0].plot([0, 15], [0, 15], color='black', linestyle='--', label="Labels")
+    axes[0].set_title("Ordinary Dataset")
+    axes[0].set_xlabel("Predictions")
+    axes[0].set_ylabel("True Labels")
+    axes[0].legend()
+
+    # Heuristic Dataset subplot
+    axes[1].scatter(pred2, label12, alpha=0.75, label="Heuristic Dataset")
+    axes[1].plot([0, 15], [0, 15], color='black', linestyle='--', label="Labels")
+    axes[1].set_title("Heuristic Bootstrapped Dataset")
+    axes[1].set_xlabel("Predictions")
+    axes[1].legend()
+
+    plt.suptitle("Predictions vs True Labels (n = {})".format(len(common_names)))
     plt.legend()
     plt.savefig(predplot_path)
     plt.tight_layout()
