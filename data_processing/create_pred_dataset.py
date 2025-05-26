@@ -84,4 +84,4 @@ test_dataset = HFDataset.from_dict(
 )
 
 # Save the dataset to disk
-test_dataset.save_to_disk("data/heuristic_pred_test")
+test_dataset.save_to_disk(f"data/{args.encoding}_pred_test")

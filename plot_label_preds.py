@@ -53,7 +53,7 @@ def eval_on_named_dataset(model_path,
         })
     return eval_dict
 
-def plot_2_dicts(eval_dict1, eval_dict2, predplot_path, mse_path):
+def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_path):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -73,12 +73,28 @@ def plot_2_dicts(eval_dict1, eval_dict2, predplot_path, mse_path):
     label12 = np.array(label12)
     pred2 = np.array(pred2)
     # label2 = np.array(label2)
-
+    
+    # 3 pearson
+    from scipy.stats import pearsonr
+    boostrapped_label_pred_corr = pearsonr(pred2.squeeze(1), label12.squeeze(1))
+    ordinary_label_pred_corr = pearsonr(pred1.squeeze(1), label12.squeeze(1))
+    mutual_pred_corr = pearsonr(pred1.squeeze(1), pred2.squeeze(1))
+    # print
+    print(f"Ordinary Dataset Label-Prediction Correlation: {ordinary_label_pred_corr[0]:.4f}, p-value: {ordinary_label_pred_corr[1]:.4f}")
+    print(f"Heuristic Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}, p-value: {boostrapped_label_pred_corr[1]:.4f}")
+    print(f"Mutual Prediction Correlation: {mutual_pred_corr[0]:.4f}, p-value: {mutual_pred_corr[1]:.4f}")
     # Plot the predictions
     plt.figure(figsize=(10, 10))
     plt.scatter(pred1, label12, alpha=0.75, label="Ordinary Dataset")
     plt.scatter(pred2, label12, alpha=0.75, label="Heuristic Dataset")
     plt.scatter(label12, label12, alpha=0.75, label="Labels")
+    # print the correlations onto the plot, only corr values
+    # right-down corner
+    # plt.text(0.95, 0.05, f"Ordinary Dataset Label-Prediction Correlation: {ordinary_label_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
+    # plt.text(0.95, 0.10, f"Heuristic Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
+    # plt.text(0.95, 0.15, f"Mutual Prediction Correlation: {mutual_pred_corr[0]:.4f}", transform=plt.gca().transAxes, fontsize=12, verticalalignment='bottom', horizontalalignment='right')
+    # plt.plot([0, 15], [0, 15], color='black', linestyle='--', label="y = x")
+    
     plt.xlabel("Predictions")
     plt.ylabel("True Labels")
     plt.title("Predictions vs True Labels (n = {})".format(len(common_names)))
@@ -90,11 +106,20 @@ def plot_2_dicts(eval_dict1, eval_dict2, predplot_path, mse_path):
     # Plot the MSE of Ordinary Dataset & Heuristic Dataset
     mse1 = np.array([eval_dict1[name]["mse"] for name in common_names])
     mse2 = np.array([eval_dict2[name]["mse"] for name in common_names])
+    mse_gap = mse2 - mse1 # heuristic - ordinary
+    # find big mse2 but small mse1 indices
+    big_mse2_indices = np.where((mse2 > 10) & (mse1 < 2.5) & (mse_gap > 10))[0]
     plt.figure(figsize=(10, 10))
-    plt.scatter(mse1, mse2, alpha=0.75)
+    plt.scatter(mse1, mse2, alpha=0.75, label="Normal Points")
+    # big mse2 indices then plot them in red and their structure names on the graph
+    for i in big_mse2_indices:
+        plt.text(mse1[i], mse2[i], common_names[i], fontsize=8, color='black')
+    plt.scatter(mse1[big_mse2_indices], mse2[big_mse2_indices], color='red', label='Big MSE Gap')
+    # legend for red
+    plt.legend()
     plt.xlabel("Ordinary Dataset MSE")
     plt.ylabel("Heuristic Dataset MSE")
-    plt.title("MSE of Ordinary Dataset vs Heuristic Dataset (n = {})".format(len(common_names)))
+    plt.title("MSE of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path)
     plt.tight_layout()
     plt.clf()
@@ -103,9 +128,9 @@ def plot_2_dicts(eval_dict1, eval_dict2, predplot_path, mse_path):
     # violin graph about mse1 and mse2
     plt.figure(figsize=(10, 10))
     plt.violinplot([mse1, mse2], showmeans=True)
-    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Dataset"])
+    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Bootstrapped Dataset"])
     plt.ylabel("MSE")
-    plt.title("MSE of Ordinary Dataset vs Heuristic Dataset (n = {})".format(len(common_names)))
+    plt.title("MSE of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path.replace(".png", "_violin.png"))
     plt.tight_layout()
     plt.clf()
@@ -115,10 +140,10 @@ def plot_2_dicts(eval_dict1, eval_dict2, predplot_path, mse_path):
     plt.figure(figsize=(10, 10))
 
     plt.violinplot([abs(pred1.squeeze(1) - label12.squeeze(1)), abs(pred2.squeeze(1) - label12.squeeze(1))], showmeans=True)
-    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Dataset"])
+    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Bootstrapped Dataset"])
     plt.ylabel("Label-Pred Gap")
-    plt.title("Label-Pred Gap of Ordinary Dataset vs Heuristic Dataset (n = {})".format(len(common_names)))
-    plt.savefig(mse_path.replace(".png", "_label_pred_gap_violin.png"))
+    plt.title("Label-Pred Gap of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
+    plt.savefig(mse_path.replace("_mse.png", "_label_pred_gap_violin.png"))
     plt.tight_layout()
     
 def main():
@@ -143,7 +168,7 @@ def main():
         num_workers=args.num_workers,
     )
     
-    plot_2_dicts(
+    plot_bootstrap_ordinary_preds(
         real_eval_dict,
         pred_eval_dict_heu,
         predplot_path="visual/real_vs_heu_preds.png",

@@ -1,6 +1,8 @@
 from Bio.PDB import MMCIFParser
 import numpy as np
 import random
+from openbabel import pybel
+import os
 
 # def cif_parsing_demo(name="1a30"):
 #     cplx_path = f"../data/complexes_16/{name}/pred.rank_0.cif"
@@ -141,16 +143,28 @@ class FeatureExtractorCIF():
         
         return encoding
     
-    def get_features(self, complex_structure, encoding_type="heuristic"):
+    def get_features(self, complex_structure, encoding_type="heuristic", complex_dir=None):
         if encoding_type == "heuristic":
             return self.get_features_by_heuristic(complex_structure)
         elif encoding_type == "gold":
-            return self.get_features_by_reading_pdb(complex_structure, complex_structure)
+            if complex_dir is None:
+                structure_id = complex_structure.id
+                # 自动判断目录
+                for base in ["data/CASF-2016/coreset", "data/refined-set"]:
+                    candidate = os.path.join(base, structure_id)
+                    if os.path.exists(candidate):
+                        complex_dir = candidate
+                        break
+                if complex_dir is None:
+                    raise FileNotFoundError(f"Cannot find pdb for {structure_id}")
+            return self.get_features_by_reading_gold(complex_structure, complex_dir)
         
-    def get_features_by_reading_pdb(self, complex_structure, pdb_path):
+    def get_features_by_reading_gold(self, complex_structure, complex_dir):
         # read the hybridization from original pdb
-        # TODO
-        raise NotImplementedError("This method is not implemented yet.")
+        """
+        从PDB和MOL2文件中提取金标准杂化状态特征
+        """
+        raise NotImplementedError("This method is not implemented yet. Please use 'heuristic' encoding instead.")
     
     def get_features_by_heuristic(self, complex_structure):
         coords_protein = []

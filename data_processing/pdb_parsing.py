@@ -39,14 +39,14 @@ class FeatureExtractorPDB():
     def get_features(self, molecule, molprotein):
         coords = []
         features = []
-            
+        
         for atom in molecule:
             coords.append(atom.coords)
-            if atom.atomicnum in [6,7,16]:
-                atomicnum = (atom.atomicnum,atom.hyb)
-                features.append(self.encode(atomicnum,molprotein))
+            if atom.atomicnum in [6, 7, 16]:
+                atomicnum = (atom.atomicnum, atom.hyb)
+                features.append(self.encode(atomicnum, molprotein))
             else:
-                features.append(self.encode(atom.atomicnum,molprotein))
+                features.append(self.encode(atom.atomicnum, molprotein))
         
         coords = np.array(coords, dtype=np.float32) # shape [num_atoms, 3]
         features = np.array(features, dtype=np.float32) # shape [num_atoms, 28]
