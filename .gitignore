@@ -9,7 +9,7 @@ debug/*
 debug/
 ckpt/*
 data/*_test
-
+data/aug
 # Only Apple Can Do
 .DS_Store
 
