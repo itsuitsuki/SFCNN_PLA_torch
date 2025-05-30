@@ -103,6 +103,7 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
 
     plt.suptitle("Predictions vs True Labels (n = {})".format(len(common_names)))
     plt.legend()
+    os.makedirs(os.path.dirname(predplot_path), exist_ok=True)
     plt.savefig(predplot_path)
     plt.tight_layout()
     plt.clf()
@@ -126,6 +127,23 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     plt.title("MSE of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path)
     plt.tight_layout()
+    plt.clf()
+    plt.close("all")
+    
+    # plot the 10 largest mse2-mse1 indices and names
+    # Sort indices by mse_gap in descending order
+    largest_gap_indices = np.argsort(mse_gap)[-10:]
+    largest_gap_names = [common_names[i] for i in largest_gap_indices]
+    largest_gap_values = mse_gap[largest_gap_indices]
+
+    # Plot the 10 largest mse gaps
+    plt.figure(figsize=(10, 6))
+    plt.barh(largest_gap_names, largest_gap_values, color='orange')
+    plt.xlabel("MSE Gap (Heuristic - Ordinary)")
+    plt.ylabel("Structure Names")
+    plt.title("Top 10 Largest MSE Gaps")
+    plt.tight_layout()
+    plt.savefig(mse_path.replace(".png", "_largest_mse_gap.png"))
     plt.clf()
     plt.close("all")
     
@@ -158,7 +176,9 @@ def main():
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--num_workers", type=int, default=4)
     args = parser.parse_args()
-    
+    # ckpt/{model_name}/best_model.pth
+    model_name = os.path.basename(os.path.dirname(args.model_path))
+    os.makedirs(f"plots/{model_name}", exist_ok=True)
     real_eval_dict = eval_on_named_dataset(
         model_path=args.model_path,
         data_path="data/ordinary_dataset/test",
@@ -175,8 +195,8 @@ def main():
     plot_bootstrap_ordinary_preds(
         real_eval_dict,
         pred_eval_dict_heu,
-        predplot_path="visual/real_vs_heu_preds.png",
-        mse_path="visual/real_vs_heu_mse.png",
+        predplot_path=f"plots/{model_name}/real_vs_heu_preds.png",
+        mse_path=f"plots/{model_name}/real_vs_heu_mse.png",
     )
     
 if __name__ == "__main__":

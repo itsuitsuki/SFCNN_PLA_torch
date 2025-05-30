@@ -71,7 +71,7 @@ for complex_name in tqdm(test_complex_names, desc="Processing test complexes", t
     test_grids.append(grid.squeeze(0)) # each grid is a tensor shape (20, 20, 20, 28)
     test_labels.append(test_affinity[complex_name]) # each label is a float
     test_names.append(complex_name) # each name is a string
-    test_plddt.append(np.mean(b_factors_as_plddts)) # aggregate pLDDT
+    test_plddt.append(np.min(b_factors_as_plddts)) # aggregate pLDDT by minimizing
     
 test_dataset = HFDataset.from_dict(
     {
