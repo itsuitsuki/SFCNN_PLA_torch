@@ -86,21 +86,11 @@ Since CIF (MMCIF) files don't provide the hybridization information, but only th
 we must find a way to get the hybridization information of carbon, nitrogen and sulfur atoms to 
 generate the same fashion of encoding as the original SFCNN paper as well as the way in the real structure dataset.
 
-We create the dataset on the predicted structures by two ways:
-1. By Heuristics: We infer the hybridization from contextual information (e.g. the residue type, the atom's neighbors, etc.)
-2. From PDB files: We use the gold (annotated/ground truth) hybridization information from the PDB files in the real structure dataset (CASF-16).
-
-### Hybridization-by-Heuristic Encoding
+We can create the dataset on the predicted structures by heuristics: We infer the hybridization from contextual information. (e.g. the residue type, the atom's neighbors, etc.)
+### Bootstrapping
 ```sh
 python data_processing/create_pred_dataset.py --encoding heuristic
 ```
-
-### Hybridization-by-PDB Encoding # TODO
-```sh
-python data_processing/create_pred_dataset.py --encoding gold
-```
-
-
 
 ## File structure
 ```sh
