@@ -1,0 +1,47 @@
+pymol代码 （以3o9i为例）
+# 加载真实蛋白质结构，命名为 protein
+load C:/VSCode/cs177 project/SFCNN_PLA_torch-main/data/CASF-2016/coreset/3o9i/3o9i_protein.pdb, protein
+
+# 加载真实配体结构，命名为 ligand
+load C:/VSCode/cs177 project/SFCNN_PLA_torch-main/data/CASF-2016/coreset/3o9i/3o9i_ligand.mol2, ligand
+
+# 加载预测的蛋白质-配体复合物结构，命名为 pred_complex
+load C:/VSCode/cs177 project/SFCNN_PLA_torch-main/data/complexes_16/3o9i/pred.rank_0.cif, pred_complex
+
+# 对齐预测复合物中的蛋白质部分到真实蛋白结构上
+align pred_complex and polymer, protein and polymer
+
+# 显示真实蛋白为 cartoon 模式，并上绿色
+show cartoon, protein
+color green, protein
+
+# 显示预测蛋白为 cartoon 模式，并上蓝色
+show cartoon, pred_complex and polymer
+color blue, pred_complex and polymer
+
+# 显示真实配体为 sticks 模式，设置橙色并调整棒棒糖粗细
+show sticks, ligand
+color orange, ligand
+set stick_radius, 0.25, ligand
+
+# 选中预测结构中的配体（小分子），命名为 pred_ligand 并显示为紫色 sticks
+select pred_ligand, pred_complex and organic
+show sticks, pred_ligand
+color purple, pred_ligand
+set stick_radius, 0.25, pred_ligand
+
+# 将视图居中并聚焦到所有结构的整体中心
+center all
+zoom all, 10
+
+# 设置背景为白色、蛋白 cartoon 模式半透明、美化抗锯齿
+bg_color white
+set cartoon_transparency, 0.2
+set ray_opaque_background, off
+
+# 渲染高清图像并导出为 3o9i.png
+ray 1600,1200
+png 3o9i.png
+
+
+
