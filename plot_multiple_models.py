@@ -48,6 +48,7 @@ if __name__ == "__main__":
     model_names = [
         "sfcnn_lr0.004_dropout0.1_wd0.01_bs32",
         "sfcnn_lr0.004_dropout0.5_wd0.01_bs32",
+        "sfcnn_lr0.0016_dropout0.3_wd0.015_bs16"
     ]
     plot_path = "plots/aug/multiple_models_std_violin.png"
     multiple_evaldict_variance_plot(model_names, plot_path)
