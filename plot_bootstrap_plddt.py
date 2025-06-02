@@ -99,7 +99,7 @@ def plot_plddt_and_mse(eval_dict, visual_path="./plots/"):
     plt.savefig(os.path.join(visual_path, "plddt_vs_label_gap.png"))
     plt.close()
 if __name__ == "__main__":
-    model_name = "sfcnn_lr0.004_dropout0.5_wd0.01_bs32"
+    model_name = "sfcnn_lr0.0016_dropout0.3_wd0.015_bs16"
     model_path = f"ckpt/{model_name}/best_model.pth"  # Update with your model path
     data_path = "data/heuristic_pred_test"  # Update with your data path
     eval_dict = eval_on_bootstrap_dataset(model_path, data_path)

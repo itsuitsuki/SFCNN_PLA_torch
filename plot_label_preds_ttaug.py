@@ -74,7 +74,7 @@ def eval_on_named_dataset(model_path,
     return eval_dict
 
 if __name__ == "__main__":
-    model_name = "sfcnn_lr0.004_dropout0.1_wd0.01_bs32"
+    model_name = "sfcnn_lr0.0016_dropout0.3_wd0.015_bs16"
     model_path = f"ckpt/{model_name}/best_model.pth"
     data_path_real = "data/aug/real_test_aug"
     data_path_pred = "data/aug/pred_test_aug"
