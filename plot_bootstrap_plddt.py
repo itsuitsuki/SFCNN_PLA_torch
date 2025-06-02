@@ -76,7 +76,7 @@ def plot_plddt_and_mse(eval_dict, visual_path="./plots/"):
     # Plot pLDDT vs MSE
     plt.figure(figsize=(10, 6))
     plt.scatter(plddt, mse, alpha=0.5)
-    plt.title("pLDDT vs MSE on Bootstrapped Dataset")
+    plt.title("pLDDT vs MSE in Bootstrapped Evaluation")
     plt.xlabel("pLDDT")
     plt.ylabel("MSE")
     

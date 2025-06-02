@@ -38,7 +38,7 @@ def multiple_evaldict_variance_plot(model_names: list, plot_path: str):
     import matplotlib.pyplot as plt
     plt.figure(figsize=(10, 10))
     plt.violinplot([real_stds, pred_stds], showmeans=True, showmedians=True)
-    plt.xticks([1, 2], ["Real", "Pred"])
+    plt.xticks([1, 2], ["Groundtruth Structure Evaluation", "Bootstrapped Evaluation"])
     plt.ylabel("Standard Deviation")
     plt.title("Standard Deviation of Predictions for Multiple Models")
     plt.savefig(plot_path)

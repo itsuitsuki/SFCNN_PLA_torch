@@ -74,7 +74,7 @@ def eval_on_named_dataset(model_path,
     return eval_dict
 
 if __name__ == "__main__":
-    model_name = "sfcnn_lr0.0016_dropout0.3_wd0.015_bs16"
+    model_name = "sfcnn_lr0.004_dropout0.1_wd0.01_bs32"
     model_path = f"ckpt/{model_name}/best_model.pth"
     data_path_real = "data/aug/real_test_aug"
     data_path_pred = "data/aug/pred_test_aug"
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # print(real_stds.shape, pred_stds.shape)
     plt.figure(figsize=(10, 10))
     plt.violinplot([real_stds, pred_stds], showmeans=True, showmedians=True)
-    plt.xticks([1, 2], ["Real Test", "Heuristic Test"])
+    plt.xticks([1, 2], ["Groundtruth Test", "Bootstrapped Test"])
     plt.ylabel("Standard Deviation of Predictions")
     plt.title(f"Distribution of Standard Deviations of Predictions for {model_name}")
     plt.savefig(f"plots/aug/{model_name}/std_violin.png")

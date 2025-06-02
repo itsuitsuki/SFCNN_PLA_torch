@@ -80,24 +80,24 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     ordinary_label_pred_corr = pearsonr(pred1.squeeze(1), label12.squeeze(1))
     mutual_pred_corr = pearsonr(pred1.squeeze(1), pred2.squeeze(1))
     # print
-    print(f"Ordinary Dataset Label-Prediction Correlation: {ordinary_label_pred_corr[0]:.4f}, p-value: {ordinary_label_pred_corr[1]:.4f}")
-    print(f"Heuristic Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}, p-value: {boostrapped_label_pred_corr[1]:.4f}")
+    print(f"Groundtruth Dataset Label-Prediction Correlation: {ordinary_label_pred_corr[0]:.4f}, p-value: {ordinary_label_pred_corr[1]:.4f}")
+    print(f"Bootstrapped Dataset Label-Prediction Correlation: {boostrapped_label_pred_corr[0]:.4f}, p-value: {boostrapped_label_pred_corr[1]:.4f}")
     print(f"Mutual Prediction Correlation: {mutual_pred_corr[0]:.4f}, p-value: {mutual_pred_corr[1]:.4f}")
     # Plot the predictions
     fig, axes = plt.subplots(1, 2, figsize=(20, 10), sharey=True)
 
     # Ordinary Dataset subplot
-    axes[0].scatter(pred1, label12, alpha=0.75, label="Ordinary Dataset")
+    axes[0].scatter(pred1, label12, alpha=0.75, label="Groundtruth Dataset")
     axes[0].plot([0, 15], [0, 15], color='black', linestyle='--', label="Labels")
-    axes[0].set_title("Ordinary Dataset")
+    axes[0].set_title("Groundtruth Dataset")
     axes[0].set_xlabel("Predictions")
     axes[0].set_ylabel("True Labels")
     axes[0].legend()
 
     # Heuristic Dataset subplot
-    axes[1].scatter(pred2, label12, alpha=0.75, label="Heuristic Dataset")
+    axes[1].scatter(pred2, label12, alpha=0.75, label="Bootstrapped Dataset")
     axes[1].plot([0, 15], [0, 15], color='black', linestyle='--', label="Labels")
-    axes[1].set_title("Heuristic Bootstrapped Dataset")
+    axes[1].set_title("Bootstrapped Dataset")
     axes[1].set_xlabel("Predictions")
     axes[1].legend()
 
@@ -122,9 +122,9 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     plt.scatter(mse1[big_mse2_indices], mse2[big_mse2_indices], color='red', label='Big MSE Gap')
     # legend for red
     plt.legend()
-    plt.xlabel("Ordinary Dataset MSE")
-    plt.ylabel("Heuristic Dataset MSE")
-    plt.title("MSE of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
+    plt.xlabel("Groundtruth Dataset MSE")
+    plt.ylabel("Bootstrapped Dataset MSE")
+    plt.title("MSE of Groundtruth Dataset vs Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path)
     plt.tight_layout()
     plt.clf()
@@ -139,7 +139,7 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     # Plot the 10 largest mse gaps
     plt.figure(figsize=(10, 6))
     plt.barh(largest_gap_names, largest_gap_values, color='orange')
-    plt.xlabel("MSE Gap (Heuristic - Ordinary)")
+    plt.xlabel("MSE Gap (Bootstrapped - Groundtruth)")
     plt.ylabel("Structure Names")
     plt.title("Top 10 Largest MSE Gaps")
     plt.tight_layout()
@@ -150,9 +150,9 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     # violin graph about mse1 and mse2
     plt.figure(figsize=(10, 10))
     plt.violinplot([mse1, mse2], showmeans=True)
-    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Bootstrapped Dataset"])
+    plt.xticks([1, 2], ["Groundtruth Dataset", "Bootstrapped Dataset"])
     plt.ylabel("MSE")
-    plt.title("MSE of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
+    plt.title("MSE of Groundtruth Dataset vs Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path.replace(".png", "_violin.png"))
     plt.tight_layout()
     plt.clf()
@@ -162,9 +162,9 @@ def plot_bootstrap_ordinary_preds(eval_dict1, eval_dict2, predplot_path, mse_pat
     plt.figure(figsize=(10, 10))
 
     plt.violinplot([abs(pred1.squeeze(1) - label12.squeeze(1)), abs(pred2.squeeze(1) - label12.squeeze(1))], showmeans=True)
-    plt.xticks([1, 2], ["Ordinary Dataset", "Heuristic Bootstrapped Dataset"])
+    plt.xticks([1, 2], ["Groundtruth Dataset", "Bootstrapped Dataset"])
     plt.ylabel("Label-Pred Gap")
-    plt.title("Label-Pred Gap of Ordinary Dataset vs Heuristic Bootstrapped Dataset (n = {})".format(len(common_names)))
+    plt.title("Label-Pred Gap of Groundtruth Dataset vs Bootstrapped Dataset (n = {})".format(len(common_names)))
     plt.savefig(mse_path.replace("_mse.png", "_label_pred_gap_violin.png"))
     plt.tight_layout()
     

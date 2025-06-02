@@ -15,7 +15,10 @@ def ordinary_eval(data_path = "./data/ordinary_dataset",
                   ):
     # Load the dataset
     test_dataset = HFDataset.load_from_disk(os.path.join(data_path, "test"))
-    test_dataset.set_format(type="torch", columns=["grid", "label"])
+    test_dataset.set_format(type="torch", columns=["grid", "label", "name"])
+    
+    # Filter out entries with names "1o0h", "2ymd", and "2zcr", for they are anomalies
+    test_dataset = test_dataset.filter(lambda example: example["name"] not in ["1o0h", "2ymd", "2zcr"])
     # Load the model
     model = build_model()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
