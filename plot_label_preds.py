@@ -172,7 +172,7 @@ def main():
     import argparse
     import matplotlib.pyplot as plt
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_path", type=str, default="ckpt/sfcnn_lr0.004_dropout0.5_wd0.01_bs32/best_model.pth")
+    parser.add_argument("--model_path", type=str, default="ckpt/sfcnn_lr0.0016_dropout0.3_wd0.015_bs16/best_model.pth")
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--num_workers", type=int, default=4)
     args = parser.parse_args()
