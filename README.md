@@ -133,7 +133,24 @@ WANDB_DISABLED=1 CUDA_LAUNCH_BLOCKING=1 srun -G1 -c8 --mem=1M --time=5-00:00:00 
 ```
 
 # Evaluation
-## Real Structure Dataset
+## Real Structure Dataset (Groundtruth Structure Evaluation)
 ```sh
 python ordinary_eval.py --model_path <model_path> --batch_size 64 --num_workers 8
+```
+
+## Plots
+### Label-Prediction Plots including GSE, Bootstrapped Eval.
+```sh
+python plot_label_preds.py --model_path <model_path>
+python plot_label_preds_ttaug.py --model_path <model_path> # with TTA (test-time augmentation)
+```
+
+### Multiple-model Std Plots
+Plot for all models in ckpt.
+```sh
+python plot_multiple_models.py
+```
+### pLDDT-Predicted Value Plots (not used)
+```sh
+python plot_bootstrap_plddt.py
 ```
